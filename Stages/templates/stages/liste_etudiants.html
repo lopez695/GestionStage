@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Étudiants{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <!-- En-tête -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2 text-primary"></i>
+                Liste des Étudiants
+            </h5>
+            <form method="get" class="d-flex" style="max-width: 300px;">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="q" value="{{ search_term }}" 
+                           class="form-control" placeholder="Nom, email...">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Corps -->
+        <div class="card-body p-0">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    <div class="d-flex align-items-center">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %} me-2"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Tableau -->
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="width: 35%">Étudiant</th>
+                            <th style="width: 30%">Email</th>
+                            <th class="text-center" style="width: 15%">Téléphone</th>
+                            <th class="text-center" style="width: 20%">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for etudiant in etudiants %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if etudiant.photo %}
+                                    <img src="{{ etudiant.photo.url }}" class="rounded-circle me-3" width="45" height="45">
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ etudiant.get_full_name }}</div>
+                                        <small class="text-muted">ID: {{ etudiant.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle">
+                                <a href="mailto:{{ etudiant.email }}" class="text-decoration-none">
+                                    {{ etudiant.email }}
+                                </a>
+                            </td>
+                            <td class="align-middle text-center">
+                                {{ etudiant.telephone|default:"-" }}
+                            </td>
+                            <td class="align-middle text-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'profil_etudiant' etudiant.id %}" class="btn btn-outline-primary" title="Profil">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-outline-warning masquer-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#confirmModal"
+                                            data-id="{{ etudiant.id }}"
+                                            data-name="{{ etudiant.get_full_name }}"
+                                            title="Masquer">
+                                        <i class="fas fa-eye-slash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <i class="fas fa-user-graduate fa-3x mb-3"></i>
+                                <h5>Aucun étudiant trouvé</h5>
+                                {% if search_term %}
+                                <a href="?q=" class="btn btn-sm btn-outline-primary mt-2">
+                                    Réinitialiser la recherche
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmation
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'liste_etudiants' %}">
+                {% csrf_token %}
+                <input type="hidden" name="etudiant_id" id="etudiantIdInput">
+                <div class="modal-body">
+                    <p>Voulez-vous vraiment masquer :</p>
+                    <p class="fw-bold" id="studentName"></p>
+                    <div class="alert alert-warning mt-3 p-2 small">
+                        <i class="fas fa-info-circle me-2"></i>
+                        L'étudiant ne sera plus visible dans cette liste mais conservera son compte.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Annuler
+                    </button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-eye-slash me-1"></i> Confirmer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion du masquage
+    const modal = new bootstrap.Modal('#confirmModal');
+    const inputId = document.getElementById('etudiantIdInput');
+    const spanName = document.getElementById('studentName');
+    
+    document.querySelectorAll('.masquer-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const name = this.getAttribute('data-name');
+            
+            if (id && !isNaN(id)) {
+                inputId.value = id;
+                spanName.textContent = name;
+            } else {
+                console.error('ID invalide:', id);
+                alert("Erreur: ID étudiant invalide");
+            }
+        });
+    });
+    
+    // Recherche optimisée
+    const searchInput = document.querySelector('input[name="q"]');
+    let timer;
+    searchInput?.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            if (this.value.trim().length > 1 || this.value.trim().length === 0) {
+                this.form.submit();
+            }
+        }, 350);
+    });
+});
+</script>
+{% endblock %}

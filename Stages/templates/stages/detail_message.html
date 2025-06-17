@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Détail du message</h2>
+    <div class="card">
+        <div class="card-header">
+            De <strong>{{ message.expediteur.username }}</strong> à <strong>{{ message.destinataire.username }}</strong>
+            <span class="float-end">{{ message.date_envoi|date:"d M Y H:i" }}</span>
+        </div>
+        <div class="card-body">
+            <p>{{ message.contenu }}</p>
+        </div>
+        <div class="card-footer">
+            <a href="{% url 'boite_reception' %}" class="btn btn-secondary">Retour à la boîte de réception</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

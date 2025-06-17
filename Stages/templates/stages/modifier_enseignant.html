@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Card Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'profil_enseignant' %}" class="btn btn-light btn-sm me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h2 class="mb-0 text-primary">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Mettre à jour mon profil
+                </h2>
+            </div>
+
+            <!-- Main Card -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Photo Section -->
+                        <div class="text-center mb-5">
+                            <div class="position-relative d-inline-block">
+                                {% if form.instance.photo %}
+                                    <img src="{{ form.instance.photo.url }}" 
+                                         class="rounded-circle shadow border border-3 border-white" 
+                                         id="photo-preview"
+                                         width="140" 
+                                         height="140"
+                                         style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-light-subtle d-flex align-items-center justify-content-center border border-3 border-white" 
+                                         style="width: 140px; height: 140px;">
+                                        <i class="fas fa-user-tie fa-3x text-secondary"></i>
+                                    </div>
+                                {% endif %}
+                                <label for="id_photo" class="position-absolute bottom-0 end-0 bg-primary rounded-circle p-2 cursor-pointer">
+                                    <i class="fas fa-camera text-white"></i>
+                                    <input type="file" id="id_photo" name="photo" class="d-none" accept="image/*">
+                                </label>
+                            </div>
+                            
+                            {% if form.instance.photo %}
+                            <div class="form-check d-inline-block mt-3">
+                                <input type="checkbox" name="photo-clear" id="photo-clear_id" class="form-check-input">
+                                <label for="photo-clear_id" class="form-check-label text-danger small">
+                                    <i class="fas fa-trash-alt me-1"></i> Supprimer la photo
+                                </label>
+                            </div>
+                            {% endif %}
+                            <small class="text-muted d-block mt-2">Formats: JPG, PNG (max. 3MB)</small>
+                        </div>
+
+                        <!-- Personal Info Card -->
+                        <div class="card mb-4 border-light-subtle">
+                            <div class="card-header bg-light-subtle py-3">
+                                <h5 class="mb-0 text-primary">
+                                    <i class="fas fa-id-card me-2"></i>Informations personnelles
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.nom }}
+                                            <label for="{{ form.nom.id_for_label }}">{{ form.nom.label }}</label>
+                                            {% if form.nom.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.nom.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.prenom }}
+                                            <label for="{{ form.prenom.id_for_label }}">{{ form.prenom.label }}</label>
+                                            {% if form.prenom.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.prenom.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Info Card -->
+                        <div class="card mb-4 border-light-subtle">
+                            <div class="card-header bg-light-subtle py-3">
+                                <h5 class="mb-0 text-primary">
+                                    <i class="fas fa-address-book me-2"></i>Coordonnées
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.mail }}
+                                            <label for="{{ form.mail.id_for_label }}">{{ form.mail.label }}</label>
+                                            {% if form.mail.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.mail.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.telephone }}
+                                            <label for="{{ form.telephone.id_for_label }}">{{ form.telephone.label }}</label>
+                                            {% if form.telephone.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.telephone.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Info Card -->
+                        <div class="card mb-4 border-light-subtle">
+                            <div class="card-header bg-light-subtle py-3">
+                                <h5 class="mb-0 text-primary">
+                                    <i class="fas fa-briefcase me-2"></i>Informations professionnelles
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.departement }}
+                                            <label for="{{ form.departement.id_for_label }}">{{ form.departement.label }}</label>
+                                            {% if form.departement.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.departement.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.grade }}
+                                            <label for="{{ form.grade.id_for_label }}">{{ form.grade.label }}</label>
+                                            {% if form.grade.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.grade.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            {{ form.bureau }}
+                                            <label for="{{ form.bureau.id_for_label }}">{{ form.bureau.label }}</label>
+                                            {% if form.bureau.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.bureau.errors }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-end gap-3 mt-4 pt-3 border-top">
+                            <a href="{% url 'profil_enseignant' %}" class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-times me-2"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i> Enregistrer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 0.5rem;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .form-floating label {
+        color: #6c757d;
+        padding: 1rem 1.25rem;
+    }
+    
+    .form-control {
+        border-radius: 0.375rem;
+        padding: 1rem 1.25rem;
+        height: calc(3.5rem + 2px);
+    }
+    
+    .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-color: #86b7fe;
+    }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .border-light-subtle {
+        border-color: #f8f9fa !important;
+    }
+    
+    .bg-light-subtle {
+        background-color: #f8f9fa !important;
+    }
+</style>
+
+<script>
+// Photo Preview
+document.getElementById('id_photo').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const preview = document.getElementById('photo-preview');
+        if (preview) {
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('d-none');
+        } else {
+            const placeholder = document.querySelector('.rounded-circle.div');
+            if (placeholder) {
+                placeholder.innerHTML = `
+                    <img src="${URL.createObjectURL(file)}" 
+                         class="rounded-circle shadow border border-3 border-white" 
+                         id="photo-preview"
+                         width="140" 
+                         height="140"
+                         style="object-fit: cover;">
+                `;
+            }
+        }
+    }
+});
+
+// Form Validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails de la Visite{% endblock %}
+{% block page_title %}Détails de la Visite{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'liste_visites' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+    {% if request.user == visite.stage.enseignant %}
+    <a href="{% url 'modifier_visite' visite.id %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i> Modifier
+    </a>
+    <a href="{% url 'supprimer_visite' visite.id %}" class="btn btn-sm btn-outline-danger">
+        <i class="bi bi-trash"></i> Supprimer
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ visite.get_type_visite_display }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Date:</strong> {{ visite.date|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Stage:</strong> {{ visite.stage.candidature.offre.entreprise.nom }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Étudiant:</strong> {{ visite.stage.candidature.etudiant.get_full_name }}</p>
+                        <p><strong>Enseignant:</strong> {{ visite.stage.enseignant.get_full_name }}</p>
+                    </div>
+                </div>
+                
+                <h5 class="mt-4">Notes</h5>
+                <div class="border p-3 bg-light">
+                    {{ visite.notes|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informations du stage</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Entreprise:</strong> {{ visite.stage.candidature.offre.entreprise.nom }}</p>
+                <p><strong>Période:</strong> 
+                    {{ visite.stage.date_debut|date:"d/m/Y" }} - {{ visite.stage.date_fin|date:"d/m/Y" }}
+                </p>
+                <p><strong>Tuteur:</strong> {{ visite.stage.tuteur_entreprise }}</p>
+                
+                <hr>
+                
+                <a href="{% url 'detail_stage' visite.stage.id %}" class="btn btn-sm btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-eye"></i> Voir le stage
+                </a>
+                
+                {% if visite.stage.rapport_stage %}
+                <a href="{% url 'detail_rapport' visite.stage.rapport_stage.id %}" class="btn btn-sm btn-outline-info w-100">
+                    <i class="bi bi-file-earmark-text"></i> Voir le rapport
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

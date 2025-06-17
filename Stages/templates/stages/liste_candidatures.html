@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Candidatures pour {{ offre.titre }} - {{ request.user.entreprise_profile.nom }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header avec statistiques -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary shadow-lg">
+                <div class="card-body p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h2 class="text-white mb-0">
+                                <i class="fas fa-users-cog me-2"></i>
+                                Gestion des candidatures
+                            </h2>
+                            <p class="text-white opacity-8 mb-0">
+                                Offre: {{ offre.titre }} | 
+                                Entreprise: {{ request.user.entreprise_profile.nom }}
+                            </p>
+                        </div>
+                        <a href="{% url 'detail_offre' offre.id %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Retour à l'offre
+                        </a>
+                    </div>
+                    <hr class="horizontal light my-3">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h3 class="text-white mb-0">{{ candidatures.count }}</h3>
+                            <p class="text-white opacity-8 mb-0">Total</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-white mb-0">{{ candidatures|filter_statut:'EN_ATTENTE'|length }}</h3>
+                            <p class="text-white opacity-8 mb-0">En attente</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h3 class="text-white mb-0">{{ candidatures|filter_statut:'ACCEPTEE'|length }}</h3>
+                            <p class="text-white opacity-8 mb-0">Acceptées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau principal -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header border-0 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Liste des candidatures</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                    id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-filter me-1"></i> Filtres
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="?statut=EN_ATTENTE">En attente</a></li>
+                                <li><a class="dropdown-item" href="?statut=ACCEPTEE">Acceptées</a></li>
+                                <li><a class="dropdown-item" href="?statut=REFUSEE">Refusées</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="?">Toutes</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    {% if candidatures %}
+                    <div class="table-responsive">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Candidat</th>
+                                    <th class="text-uppercase text-secondary text-xs font-weight-bolder opacity-7 ps-2">Poste</th>
+                                    <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Statut</th>
+                                    <th class="text-center text-uppercase text-secondary text-xs font-weight-bolder opacity-7">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for candidature in candidatures %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-3 py-1">
+                                            <div>
+                                                {% if candidature.etudiant.user.photo %}
+                                                <img src="{{ candidature.etudiant.user.photo.url }}" 
+                                                     class="avatar avatar-sm me-3" alt="Photo">
+                                                {% else %}
+                                                <div class="avatar avatar-sm bg-gradient-secondary me-3">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ candidature.etudiant.user.get_full_name }}</h6>
+                                                <p class="text-xs text-secondary mb-0">
+                                                    {{ candidature.etudiant.user.email }}<br>
+                                                    {{ candidature.etudiant.promotion }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-sm font-weight-bold mb-0">{{ offre.titre }}</p>
+                                        <p class="text-xs text-secondary mb-0">
+                                            Postulé le {{ candidature.date_postulation|date:"d/m/Y" }}
+                                        </p>
+                                    </td>
+                                    <td class="align-middle text-center text-sm">
+                                        <span class="badge badge-sm 
+                                            {% if candidature.statut == 'ACCEPTEE' %}bg-gradient-success
+                                            {% elif candidature.statut == 'REFUSEE' %}bg-gradient-danger
+                                            {% else %}bg-gradient-secondary{% endif %}">
+                                            {{ candidature.get_statut_display }}
+                                        </span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{% url 'detail_candidature' candidature.id %}" 
+                                               class="btn btn-sm btn-outline-info me-2"
+                                               data-bs-toggle="tooltip" title="Détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if candidature.statut == 'EN_ATTENTE' %}
+                                            <form method="post" action="{% url 'accepter_candidature' candidature.id %}" 
+                                                  class="me-2">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-success"
+                                                        data-bs-toggle="tooltip" title="Accepter">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            
+                                            <form method="post" action="{% url 'refuser_candidature' candidature.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        data-bs-toggle="tooltip" title="Refuser">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </form>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-secondary mb-3"></i>
+                        <h5>Aucune candidature pour cette offre</h5>
+                        <p class="text-muted">Les candidatures apparaîtront ici lorsqu'elles seront soumises.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.badge-sm {
+    font-size: 0.65rem;
+    padding: 0.35em 0.65em;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Activation des tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // Confirmation pour les actions
+    document.querySelectorAll('form[action*="accepter"], form[action*="refuser"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const action = this.action.includes('accepter') ? 'accepter' : 'refuser'
+            if (!confirm(`Êtes-vous sûr de vouloir ${action} cette candidature ?`)) {
+                e.preventDefault()
+            }
+        })
+    })
+})
+</script>
+{% endblock %}

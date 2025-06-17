@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Candidature de {{ candidature.etudiant.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">Détails de la candidature</h3>
+                        <a href="{% url 'liste_candidatures' candidature.offre.id %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- En-tête avec info étudiant -->
+                    <div class="d-flex align-items-center mb-4">
+                        {% if candidature.etudiant.photo %}
+                        <img src="{{ candidature.etudiant.photo.url }}" class="rounded-circle me-3" width="80" height="80" alt="Photo profil">
+                        {% else %}
+                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-user text-white fa-2x"></i>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <h4>{{ candidature.etudiant.get_full_name }}</h4>
+                            <p class="mb-1">{{ candidature.etudiant.email }}</p>
+                            <span class="badge bg-{% if candidature.statut == 'ACCEPTEE' %}success{% elif candidature.statut == 'REFUSEE' %}danger{% else %}warning{% endif %}">
+                                {{ candidature.get_statut_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Info offre -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ candidature.offre.titre }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ candidature.offre.entreprise.nom }}</h6>
+                            <p class="card-text">
+                                <small class="text-muted">Postulé le {{ candidature.date_postulation|date:"d/m/Y à H:i" }}</small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Curriculum Vitae</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
+                                    <p class="mb-2">{{ candidature.cv.name|cut:"candidatures/cv/" }}</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ candidature.cv.url }}" download class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-download me-1"></i> Télécharger
+                                        </a>
+                                        <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye me-1"></i> Visualiser
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Lettre de motivation</h6>
+                                </div>
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                                    <p class="mb-2">{{ candidature.lettre_motivation.name|cut:"candidatures/lettres/" }}</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ candidature.lettre_motivation.url }}" download class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-download me-1"></i> Télécharger
+                                        </a>
+                                        <a href="{{ candidature.lettre_motivation.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                            <i class="fas fa-eye me-1"></i> Visualiser
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between">
+                        {% if candidature.statut != 'ACCEPTEE' %}
+                        <form method="post" action="{% url 'accepter_candidature' candidature.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-1"></i> Accepter la candidature
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        {% if candidature.statut != 'REFUSEE' %}
+                        <form method="post" action="{% url 'refuser_candidature' candidature.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-times me-1"></i> Refuser la candidature
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

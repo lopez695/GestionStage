@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Détails du rapport{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-file-alt"></i> Rapport de stage
+                        </h4>
+                        <span class="badge badge-{% if rapport.statut == 'valide' %}success{% elif rapport.statut == 'rejete' %}danger{% else %}warning{% endif %}">
+                            {{ rapport.get_statut_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>Informations générales</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Étudiant :</strong> {{ rapport.stage.candidature.etudiant.get_full_name }}</p>
+                                <p><strong>Entreprise :</strong> {{ rapport.stage.candidature.offre.entreprise.nom }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Date de soumission :</strong> {{ rapport.date_soumission|date:"d/m/Y H:i" }}</p>
+                                <p><strong>Enseignant référent :</strong> {{ rapport.stage.enseignant.get_full_name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Fichier du rapport</h5>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-pdf fa-3x text-danger mr-3"></i>
+                            <div>
+                                <p class="mb-1">{{ rapport.fichier.name|cut:"rapports/" }}</p>
+                                <a href="{{ rapport.fichier.url }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <i class="fas fa-download"></i> Télécharger
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if rapport.commentaires %}
+                    <div class="mb-4">
+                        <h5>Commentaires de l'étudiant</h5>
+                        <div class="alert alert-light">
+                            {{ rapport.commentaires }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if rapport.note %}
+                    <div class="mb-4">
+                        <h5>Évaluation</h5>
+                        <div class="alert alert-{% if rapport.note >= 10 %}success{% else %}warning{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Note :</strong> {{ rapport.note }}/20
+                                </div>
+                                {% if request.user == rapport.stage.enseignant %}
+                                <a href="{% url 'modifier_evaluation' rapport.id %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i> Modifier
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Commentaires -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-comments"></i> Commentaires</h5>
+                </div>
+                <div class="card-body">
+                    {% if commentaires %}
+                    <div class="list-group mb-4">
+                        {% for commentaire in commentaires %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ commentaire.auteur.get_full_name }}</strong>
+                                <small class="text-muted">{{ commentaire.date_creation|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            {% if commentaire.page %}
+                            <small class="text-muted">Page {{ commentaire.page }}</small>
+                            {% endif %}
+                            <p class="mt-2 mb-0">{{ commentaire.texte }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        Aucun commentaire pour le moment.
+                    </div>
+                    {% endif %}
+                    
+                    {% if request.user != rapport.stage.candidature.etudiant %}
+                    <form method="post" action="{% url 'ajouter_commentaire' rapport.id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="commentaire">Ajouter un commentaire</label>
+                            <textarea class="form-control" id="commentaire" name="texte" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="page">Page (optionnel)</label>
+                            <input type="number" class="form-control" id="page" name="page" min="1">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Envoyer
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Statut du rapport</h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item {% if rapport.statut != 'brouillon' %}completed{% endif %}">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Soumis</h6>
+                                <small class="text-muted">
+                                    {% if rapport.statut != 'brouillon' %}
+                                    {{ rapport.date_soumission|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                    En attente
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if rapport.statut == 'valide' or rapport.statut == 'rejete' %}completed{% endif %}">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Évalué</h6>
+                                <small class="text-muted">
+                                    {% if rapport.statut == 'valide' or rapport.statut == 'rejete' %}
+                                    {{ rapport.date_evaluation|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                    En attente
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if rapport.statut == 'valide' %}completed{% endif %}">
+                            <div class="timeline-point"></div>
+                            <div class="timeline-content">
+                                <h6>Validé</h6>
+                                <small class="text-muted">
+                                    {% if rapport.statut == 'valide' %}
+                                    {{ rapport.date_validation|date:"d/m/Y H:i" }}
+                                    {% else %}
+                                    En attente
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if request.user == rapport.stage.enseignant and rapport.statut == 'soumis' %}
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <form method="post" action="{% url 'valider_rapport' rapport.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check"></i> Valider
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejeterModal">
+                            <i class="fas fa-times"></i> Rejeter
+                        </button>
+                    </div>
+                    
+                    <!-- Modal pour rejeter -->
+                    <div class="modal fade" id="rejeterModal" tabindex="-1" role="dialog" aria-labelledby="rejeterModalLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="rejeterModalLabel">Rejeter le rapport</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form method="post" action="{% url 'rejeter_rapport' rapport.id %}">
+                                    <div class="modal-body">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="raison">Raison du rejet</label>
+                                            <textarea class="form-control" id="raison" name="raison" rows="3" required></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                        <button type="submit" class="btn btn-danger">Confirmer le rejet</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if rapport.statut == 'rejete' and rapport.raison_rejet %}
+            <div class="card shadow-sm mb-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Raison du rejet</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ rapport.raison_rejet }}</p>
+                    {% if request.user == rapport.stage.candidature.etudiant %}
+                    <a href="{% url 'soumettre_rapport' rapport.stage.id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-upload"></i> Soumettre à nouveau
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    .timeline-point {
+        position: absolute;
+        left: -1.5rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background-color: #dee2e6;
+        top: 0.25rem;
+    }
+    .timeline-item.completed .timeline-point {
+        background-color: var(--success);
+    }
+    .timeline-content {
+        padding-left: 0.5rem;
+    }
+    .badge {
+        font-size: 0.9em;
+    }
+</style>
+{% endblock %}

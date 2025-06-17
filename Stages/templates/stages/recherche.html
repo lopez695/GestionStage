@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Résultats de recherche pour "{{ query }}"</h2>
+    
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control" 
+                   placeholder="Rechercher un stage..." value="{{ query }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Rechercher
+            </button>
+        </div>
+    </form>
+
+    {% if results %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <!-- Tableau des résultats -->
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">Aucun résultat trouvé</div>
+    {% endif %}
+</div>
+{% endblock %}

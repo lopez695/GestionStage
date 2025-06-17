@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Modifier ma candidature{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Modifier ma candidature
+                        </h3>
+                        <a href="{% url 'mes_candidatures' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Retour
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="d-flex align-items-center">
+                            <span class="badge bg-primary me-2"><i class="fas fa-briefcase"></i></span>
+                            Offre : {{ candidature.offre.titre }}
+                        </h5>
+                        <p class="ps-4 mb-1">
+                            <i class="fas fa-building me-2 text-muted"></i>{{ candidature.offre.entreprise.nom }}
+                        </p>
+                        <p class="ps-4 mb-0">
+                            <i class="fas fa-calendar-day me-2 text-muted"></i>
+                            Date limite : {{ candidature.offre.date_limite|date:"d/m/Y" }}
+                        </p>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- CV -->
+                        <div class="mb-4">
+                            <label for="cv" class="form-label fw-bold">
+                                <i class="fas fa-file-pdf me-2 text-danger"></i>CV (PDF uniquement)
+                            </label>
+                            <input type="file" class="form-control" id="cv" name="cv" accept=".pdf">
+                            {% if candidature.cv %}
+                            <div class="mt-2">
+                                <small class="text-muted">Fichier actuel :</small>
+                                <a href="{{ candidature.cv.url }}" target="_blank" class="ms-2">
+                                    <i class="fas fa-eye me-1"></i>Voir le CV actuel
+                                </a>
+                                <span class="ms-2 text-muted">({{ candidature.cv.size|filesizeformat }})</span>
+                            </div>
+                            {% endif %}
+                            <div class="invalid-feedback">
+                                Veuillez sélectionner un fichier PDF valide.
+                            </div>
+                        </div>
+                        
+                        <!-- Lettre de motivation -->
+                        <div class="mb-4">
+                            <label for="lettre_motivation" class="form-label fw-bold">
+                                <i class="fas fa-file-alt me-2 text-primary"></i>Lettre de motivation (PDF uniquement)
+                            </label>
+                            <input type="file" class="form-control" id="lettre_motivation" name="lettre_motivation" accept=".pdf">
+                            {% if candidature.lettre_motivation %}
+                            <div class="mt-2">
+                                <small class="text-muted">Fichier actuel :</small>
+                                <a href="{{ candidature.lettre_motivation.url }}" target="_blank" class="ms-2">
+                                    <i class="fas fa-eye me-1"></i>Voir la lettre actuelle
+                                </a>
+                                <span class="ms-2 text-muted">({{ candidature.lettre_motivation.size|filesizeformat }})</span>
+                            </div>
+                            {% endif %}
+                            <div class="invalid-feedback">
+                                Veuillez sélectionner un fichier PDF valide.
+                            </div>
+                        </div>
+                        
+                        <!-- Commentaire -->
+                        <div class="mb-4">
+                            <label for="commentaire" class="form-label fw-bold">
+                                <i class="fas fa-comment me-2 text-info"></i>Commentaire (optionnel)
+                            </label>
+                            <textarea class="form-control" id="commentaire" name="commentaire" rows="3">{{ candidature.commentaire }}</textarea>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>Enregistrer les modifications
+                            </button>
+                            <a href="{% url 'mes_candidatures' %}" class="btn btn-outline-secondary px-4">
+                                Annuler
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Validation des fichiers avant soumission
+document.addEventListener('DOMContentLoaded', function() {
+    const forms = document.querySelectorAll('.needs-validation');
+    
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            const cvInput = document.getElementById('cv');
+            const lettreInput = document.getElementById('lettre_motivation');
+            let isValid = true;
+            
+            // Vérifier qu'au moins un fichier est fourni
+            if (!cvInput.files.length && !lettreInput.files.length) {
+                cvInput.classList.add('is-invalid');
+                lettreInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                // Vérifier l'extension des fichiers
+                if (cvInput.files.length && !cvInput.files[0].name.toLowerCase().endsWith('.pdf')) {
+                    cvInput.classList.add('is-invalid');
+                    isValid = false;
+                }
+                
+                if (lettreInput.files.length && !lettreInput.files[0].name.toLowerCase().endsWith('.pdf')) {
+                    lettreInput.classList.add('is-invalid');
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        }, false);
+    });
+    
+    // Réinitialiser la validation quand un fichier est sélectionné
+    document.getElementById('cv').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+    
+    document.getElementById('lettre_motivation').addEventListener('change', function() {
+        this.classList.remove('is-invalid');
+    });
+});
+</script>
+{% endblock %}
+
+{% block css %}
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    .card-header {
+        border-bottom: 2px solid rgba(0,0,0,.05);
+    }
+    .form-control {
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+    .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+    }
+    .invalid-feedback {
+        font-size: 0.85rem;
+    }
+    .was-validated .form-control:invalid {
+        border-color: #dc3545;
+    }
+    .was-validated .form-control:valid {
+        border-color: #198754;
+    }
+</style>
+{% endblock %}

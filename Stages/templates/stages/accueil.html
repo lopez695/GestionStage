@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% comment %}
+    {% load custom_filters %}
+{% endcomment %}
+    
+
+
+
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-primary text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold">Bienvenue sur la plateforme de stages</h1>
+        <p class="bg-primary text-white">Trouvez le stage parfait pour votre parcours universitaire</p>
+        <div class="mt-4">
+            {% if user.is_authenticated %}
+                {% if user.role == 'ETUDIANT' %}
+                    <a href="{% url 'offres' %}" class="btn btn-light btn-lg me-2">Voir les offres</a>
+                {% elif user.role == 'ENTREPRISE' %}
+                    <a href="{% url 'creer_offre' %}" class="btn btn-light btn-lg me-2">Publier une offre</a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'inscription' %}" class="btn btn-light btn-lg me-2">S'inscrire</a>
+                <a href="{% url 'connexion' %}" class="btn btn-outline-light btn-lg">Se connecter</a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
+                        <h3>Offres de stage</h3>
+                        <p>Accédez à des centaines d'offres de stage dans divers domaines.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-building fa-3x text-primary mb-3"></i>
+                        <h3>Entreprises</h3>
+                        <p>Connectez-vous avec des entreprises partenaires de l'université.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+                        <h3>Suivi pédagogique</h3>
+                        <p>Bénéficiez d'un accompagnement tout au long de votre stage.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Latest Offers Section -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Dernières offres publiées</h2>
+        <div class="row">
+            {% for offre in dernieres_offres %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ offre.titre }}</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">{{ offre.entreprise.nom }}</h6>
+                        <p class="card-text">{{ offre.description|truncatewords:20 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Date limite: {{ offre.date_limite|date:"d/m/Y" }}</small>
+                            <a href="{% url 'detail_offre' offre.id %}" class="btn btn-sm btn-primary">Voir détails</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p>Aucune offre disponible pour le moment.</p>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'offres' %}" class="btn btn-outline-primary">Voir toutes les offres</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

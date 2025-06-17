@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h4>Mon Profil</h4>
+    </div>
+    <div class="card-body">
+
+      <div class="col-md-4 text-center">
+        {% if user.photo %}
+          <img src="{{ user.photo.url }}" alt="Photo de profil" class="img-thumbnail" style="max-width: 150px;">
+        {% else %}
+         <img src="{% static 'images/default-avatar.png' %}" alt="Avatar par défaut" class="img-thumbnail" style="max-width: 150px;">
+        {% endif %}
+      <div class="col-md-8">
+        
+          <h5>{{ user.first_name }} {{ user.last_name }}</h5>
+          <p><strong>Email :</strong> {{ user.email }}</p>
+          <p><strong>Nom d'utilisateur :</strong> {{ user.username }}</p>
+          <p><strong>Rôle :</strong> {{ user.get_role_display }}</p>  {# Si tu utilises un champ role avec choices #}
+        </div>
+      </div>
+
+      {% if profil %}
+      <hr>
+      <h5>Informations supplémentaires</h5>
+      <p><strong>Téléphone :</strong> {{ profil.telephone }}</p>
+      <p><strong>Adresse :</strong> {{ profil.adresse }}</p>
+      <p><strong>Ville :</strong> {{ profil.ville }}</p>
+      {% endif %}
+
+      <a href="{% url 'modifier_profil' %}" class="btn btn-outline-primary">Modifier mon profil</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

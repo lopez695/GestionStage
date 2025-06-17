@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Suivi de Stage - {{ stage.etudiant.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Suivi de stage</h2>
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    {% if stage.etudiant.photo %}
+                    <img src="{{ stage.etudiant.photo.url }}" class="rounded-circle" width="80" height="80" alt="Photo étudiant">
+                    {% else %}
+                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user text-white fa-2x"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h4 class="mb-1">{{ stage.etudiant.get_full_name }}</h4>
+                    <p class="mb-1">{{ stage.etudiant.filiere }} - {{ stage.etudiant.niveau }}</p>
+                    <p class="mb-0">
+                        <span class="badge bg-{% if stage.valide %}success{% else %}warning{% endif %}">
+                            {% if stage.valide %}Validé{% else %}En cours{% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{% url 'generer_attestation' stage.id %}" class="btn btn-primary">
+                <i class="fas fa-file-pdf"></i> Générer attestation
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <!-- Informations Stage -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Informations du stage</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Entreprise:</span>
+                            <strong>{{ stage.candidature.offre.entreprise.nom }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Période:</span>
+                            <strong>{{ stage.date_debut|date:"d/m/Y" }} au {{ stage.date_fin|date:"d/m/Y" }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Durée:</span>
+                            <strong>{{ stage.duree_semaines }} semaines</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Sujet:</span>
+                            <strong>{{ stage.candidature.offre.titre }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Tuteur entreprise:</span>
+                            <strong>{{ stage.tuteur_entreprise }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Documents</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="fas fa-plus"></i> Ajouter
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for doc in documents %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-{{ doc.type_icon }} text-{{ doc.type_color }} me-2"></i>
+                                {{ doc.nom }}
+                            </div>
+                            <div>
+                                <a href="{{ doc.fichier.url }}" class="btn btn-sm btn-outline-primary me-1" download>
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="{{ doc.fichier.url }}" target="_blank" class="btn btn-sm btn-outline-secondary me-1">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'supprimer_document' doc.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3 text-muted">
+                            Aucun document déposé
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <!-- Calendrier des visites -->
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Visites de suivi</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addVisiteModal">
+                        <i class="fas fa-plus"></i> Planifier
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for visite in visites %}
+                        <div class="timeline-item {% if visite.date < today %}past{% endif %}">
+                            <div class="timeline-date">
+                                {{ visite.date|date:"d M" }}<br>
+                                <small>{{ visite.date|date:"H:i" }}</small>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>{{ visite.type_visite }}</h6>
+                                <p>{{ visite.notes|truncatewords:15 }}</p>
+                                <div class="timeline-actions">
+                                    <a href="#" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editVisiteModal{{ visite.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'delete_visite' visite.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-3 text-muted">
+                            Aucune visite planifiée
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Évaluation -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Évaluation du stage</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'evaluer_stage' stage.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label class="form-label">Note finale</label>
+                            <input type="range" class="form-range" min="0" max="20" step="0.5" name="note" 
+                                   value="{{ evaluation.note|default:10 }}" oninput="noteValue.value = this.value">
+                            <div class="d-flex justify-content-between">
+                                <span>0</span>
+                                <output id="noteValue">{{ evaluation.note|default:10 }}</output>
+                                <span>20</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Appréciation</label>
+                            <textarea class="form-control" name="commentaire" rows="3">{{ evaluation.commentaire }}</textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="valide" id="valideCheck" {% if stage.valide %}checked{% endif %}>
+                            <label class="form-check-label" for="valideCheck">
+                                Stage validé
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'upload_document' stage.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Type de document</label>
+                        <select class="form-select" name="type_document">
+                            <option value="convention">Convention de stage</option>
+                            <option value="rapport">Rapport de stage</option>
+                            <option value="journal">Journal de bord</option>
+                            <option value="autre">Autre document</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nom du document</label>
+                        <input type="text" class="form-control" name="nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Fichier (PDF, max 5MB)</label>
+                        <input type="file" class="form-control" name="fichier" accept=".pdf" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Téléverser</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addVisiteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Planifier une visite</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'add_visite' stage.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Type de visite</label>
+                        <select class="form-select" name="type_visite">
+                            <option value="presentation">Présentation entreprise</option>
+                            <option value="suivi">Visite de suivi</option>
+                            <option value="finale">Visite finale</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date et heure</label>
+                        <input type="datetime-local" class="form-control" name="date_visite" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Planifier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 50px;
+}
+.timeline-item {
+    position: relative;
+    padding-bottom: 20px;
+}
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+.timeline-date {
+    position: absolute;
+    left: -50px;
+    top: 0;
+    width: 40px;
+    text-align: center;
+    background: #f8f9fa;
+    padding: 5px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+.timeline-content {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    position: relative;
+}
+.timeline-content:before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 15px;
+    width: 0;
+    height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-right: 10px solid #f8f9fa;
+}
+.timeline-item.past .timeline-date {
+    background: #e9ecef;
+}
+.timeline-item.past .timeline-content {
+    background: #e9ecef;
+}
+.timeline-item.past .timeline-content:before {
+    border-right-color: #e9ecef;
+}
+.timeline-actions {
+    margin-top: 5px;
+    text-align: right;
+}
+</style>
+{% endblock %}

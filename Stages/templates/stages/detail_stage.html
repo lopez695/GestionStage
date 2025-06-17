@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Détails du Stage - {{ stage.candidature.offre.entreprise.nom }}{% endblock %}
+{% block page_title %}Détails du Stage{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'liste_stages' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+    {% if request.user == stage.enseignant %}
+    <a href="{% url 'modifier_stage' stage.id %}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil"></i> Modifier
+    </a>
+    {% if not stage.valide %}
+    <a href="{% url 'valider_stage' stage.id %}" class="btn btn-sm btn-success">
+        <i class="bi bi-check-circle"></i> Valider
+    </a>
+    {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Colonne principale (8/12) -->
+    <div class="col-md-8">
+        <!-- Carte principale avec onglets -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="stageTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="infos-tab" data-bs-toggle="tab" data-bs-target="#infos" type="button" role="tab" aria-controls="infos" aria-selected="true">
+                            <i class="bi bi-info-circle me-1"></i> Informations
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+                            <i class="bi bi-folder me-1"></i> Documents
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="visites-tab" data-bs-toggle="tab" data-bs-target="#visites" type="button" role="tab" aria-controls="visites" aria-selected="false">
+                            <i class="bi bi-calendar-event me-1"></i> Visites
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body tab-content" id="stageTabsContent">
+                <!-- Onglet Informations -->
+                <div class="tab-pane fade show active" id="infos" role="tabpanel" aria-labelledby="infos-tab">
+                    <h4 class="card-title mb-4">{{ stage.candidature.offre.entreprise.nom }}</h4>
+                    
+                    <!-- Barre de progression -->
+                    <div class="progress mb-4" style="height: 20px;">
+                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: {{ stage.pourcentage_complete }}%" 
+                             aria-valuenow="{{ stage.pourcentage_complete }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            <span class="fw-bold">{{ stage.pourcentage_complete }}% complété</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Informations en deux colonnes -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h5><i class="bi bi-calendar-range text-primary me-2"></i> Période</h5>
+                                <p class="ps-4">
+                                    Du <span class="fw-bold">{{ stage.date_debut|date:"d/m/Y" }}</span><br>
+                                    Au <span class="fw-bold">{{ stage.date_fin|date:"d/m/Y" }}</span><br>
+                                    ({{ stage.duree_semaines }} semaines)
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h5><i class="bi bi-people text-primary me-2"></i> Encadrement</h5>
+                                <p class="ps-4">
+                                    <span class="fw-bold">Tuteur entreprise:</span><br>
+                                    {{ stage.tuteur_entreprise }}<br>
+                                    <span class="fw-bold">Enseignant référent:</span><br>
+                                    {{ stage.enseignant.get_full_name }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h5><i class="bi bi-clock-history text-primary me-2"></i> Avancement</h5>
+                                <p class="ps-4">
+                                    <span class="fw-bold">Jours restants:</span> {{ stage.jours_restants }}<br>
+                                    <span class="fw-bold">Statut:</span>
+                                    <span class="badge bg-{% if stage.valide %}success{% else %}warning{% endif %}">
+                                        {% if stage.valide %}Validé{% else %}En attente{% endif %}
+                                    </span>
+                                </p>
+                            </div>
+                            
+                            <!-- Boutons d'actions pour le statut -->
+                            <div class="mt-4">
+                                {% if request.user == stage.enseignant and stage.statut == 'en_attente' %}
+                                <div class="btn-group w-100">
+                                    <a href="{% url 'accepter_stage' stage.id %}" class="btn btn-success">
+                                        <i class="bi bi-check-lg"></i> Accepter
+                                    </a>
+                                    <a href="{% url 'refuser_stage' stage.id %}" class="btn btn-danger">
+                                        <i class="bi bi-x-lg"></i> Refuser
+                                    </a>
+                                </div>
+                                {% endif %}
+                                
+                                {% if stage.statut == 'accepte' and request.user in [stage.candidature.etudiant, stage.enseignant] %}
+                                <a href="{% url 'terminer_stage' stage.id %}" class="btn btn-primary w-100">
+                                    <i class="bi bi-flag-fill"></i> Terminer le stage
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Section Rapport -->
+                    {% if rapport %}
+                    <div class="card mt-4 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Rapport de stage</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><span class="fw-bold">Statut:</span>
+                                        <span class="badge bg-{% if rapport.statut == 'valide' %}success{% elif rapport.statut == 'rejete' %}danger{% else %}warning{% endif %}">
+                                            {{ rapport.get_statut_display }}
+                                        </span>
+                                    </p>
+                                    <p><span class="fw-bold">Soumis le:</span> {{ rapport.date_soumission|date:"d/m/Y H:i" }}</p>
+                                    {% if rapport.note %}
+                                    <p><span class="fw-bold">Note:</span> {{ rapport.note }}/20</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6 d-flex align-items-center justify-content-end">
+                                    <div class="btn-group">
+                                        <a href="{{ rapport.fichier.url }}" class="btn btn-outline-primary" download>
+                                            <i class="bi bi-download"></i> Télécharger
+                                        </a>
+                                        <a href="{% url 'detail_rapport' rapport.id %}" class="btn btn-outline-info">
+                                            <i class="bi bi-eye"></i> Détails
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Onglet Documents -->
+                <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="bi bi-archive me-2"></i>Documents du stage</h5>
+                        {% if request.user == stage.candidature.etudiant %}
+                        <a href="{% url 'upload_document_stage' stage.id %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> Ajouter
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if stage.documents.all %}
+                    <div class="list-group">
+                        {% for doc in stage.documents.all %}
+                        <div class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-file-earmark-{{ doc.type_icon }} text-{{ doc.type_color }} me-2"></i>
+                                    <span class="fw-bold">{{ doc.nom }}</span>
+                                    <small class="text-muted ms-2">({{ doc.get_type_document_display }})</small>
+                                </div>
+                                <div class="btn-group">
+                                    <a href="{{ doc.fichier.url }}" class="btn btn-sm btn-outline-primary" download>
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    {% if request.user == stage.candidature.etudiant %}
+                                    <a href="{% url 'supprimer_document_stage' doc.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-clock"></i> Uploadé le {{ doc.date_upload|date:"d/m/Y H:i" }}
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Aucun document disponible pour ce stage.
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Onglet Visites -->
+                <div class="tab-pane fade" id="visites" role="tabpanel" aria-labelledby="visites-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5><i class="bi bi-calendar-check me-2"></i>Visites de suivi</h5>
+                        {% if request.user == stage.enseignant %}
+                        <a href="{% url 'creer_visite' stage.id %}" class="btn btn-sm btn-success">
+                            <i class="bi bi-plus-lg"></i> Planifier
+                        </a>
+                        {% endif %}
+                    </div>
+                    
+                    {% if stage.visites.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for visite in stage.visites.all %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-{% if visite.type_visite == 'finale' %}success{% else %}info{% endif %}">
+                                            {{ visite.get_type_visite_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ visite.date|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'detail_visite' visite.id %}" class="btn btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if request.user == stage.enseignant %}
+                                            <a href="{% url 'modifier_visite' visite.id %}" class="btn btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'supprimer_visite' visite.id %}" class="btn btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Aucune visite planifiée pour ce stage.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Colonne latérale (4/12) -->
+    <div class="col-md-4">
+        <!-- Carte Evaluation -->
+        {% if evaluation %}
+        <div class="card mb-4 border-success">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-star-fill me-2"></i>Évaluation</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="display-2 fw-bold text-success mb-2">{{ evaluation.note }}/20</div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-center">
+                        {% for i in "12345" %}
+                        <i class="bi bi-star-fill {% if forloop.counter <= evaluation.note|divide:4 %}text-warning{% else %}text-secondary{% endif %} mx-1" style="font-size: 1.5rem;"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar"></i> Évalué le {{ evaluation.date_evaluation|date:"d/m/Y" }}
+                </p>
+            </div>
+            <div class="card-footer bg-transparent">
+                <a href="{% url 'detail_evaluation' stage.id %}" class="btn btn-outline-success w-100">
+                    <i class="bi bi-arrow-right"></i> Voir le détail
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Carte Actions rapides -->
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-lightning-charge-fill me-2"></i>Actions rapides</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not rapport and request.user == stage.candidature.etudiant %}
+                    <a href="{% url 'soumettre_rapport' stage.id %}" class="btn btn-primary">
+                        <i class="bi bi-file-earmark-plus"></i> Soumettre rapport
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'liste_documents_stage' stage.id %}" class="btn btn-outline-primary">
+                        <i class="bi bi-folder2-open"></i> Voir tous les documents
+                    </a>
+                    
+                    <a href="{% url 'liste_visites' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar2-week"></i> Voir toutes les visites
+                    </a>
+                    
+                    <a href="{% url 'calendrier' %}" class="btn btn-outline-info">
+                        <i class="bi bi-calendar-date"></i> Voir calendrier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Animation de la barre de progression
+    document.addEventListener('DOMContentLoaded', function() {
+        // Barre de progression
+        const progressBar = document.querySelector('.progress-bar');
+        if (progressBar) {
+            progressBar.style.width = '0';
+            setTimeout(() => {
+                progressBar.style.width = progressBar.getAttribute('aria-valuenow') + '%';
+            }, 300);
+        }
+        
+        // Initialisation des tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

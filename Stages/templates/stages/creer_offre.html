@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Créer une offre de stage{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i> Publier une nouvelle offre de stage
+                    </h2>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Erreur dans le formulaire :</strong>
+                        <ul>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Informations sur le stage</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_titre" class="form-label">Titre du stage*</label>
+                                <input type="text" class="form-control" id="id_titre" name="titre" 
+                                       value="{{ form.titre.value|default:'' }}" required>
+                                <small class="text-muted">Ex: Développeur Web Full Stack</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_duree_semaines" class="form-label">Durée (semaines)*</label>
+                                <input type="number" class="form-control" id="id_duree_semaines" 
+                                       name="duree_semaines" min="4" max="52" 
+                                       value="{{ form.duree_semaines.value|default:'12' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">Description détaillée*</label>
+                            <textarea class="form-control" id="id_description" name="description" 
+                                      rows="5" required>{{ form.description.value|default:'' }}</textarea>
+                            <small class="text-muted">
+                                Décrivez les missions, l'environnement de travail, etc.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_competences_requises" class="form-label">Compétences requises*</label>
+                            <textarea class="form-control" id="id_competences_requises" 
+                                      name="competences_requises" rows="3" required>
+                                {{ form.competences_requises.value|default:'' }}
+                            </textarea>
+                            <small class="text-muted">
+                                Liste des compétences attendues (une par ligne)
+                            </small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_date_limite" class="form-label">Date limite de candidature*</label>
+                                <input type="date" class="form-control" id="id_date_limite" 
+                                       name="date_limite" 
+                                       value="{{ form.date_limite.value|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_remuneration" class="form-label">Rémunération (CFA/mois)</label>
+                                <input type="number" class="form-control" id="id_remuneration" 
+                                       name="remuneration" min="0" 
+                                       value="{{ form.remuneration.value|default:'' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="id_niveau_etude" class="form-label">Niveau d'étude requis*</label>
+                                <select class="form-select" id="id_niveau_etude" name="niveau_etude" required>
+                                    <option value="">Sélectionnez...</option>
+                                    <option value="L1">Licence 1</option>
+                                    <option value="L2">Licence 2</option>
+                                    <option value="L3">Licence 3</option>
+                                    <option value="M1">Master 1</option>
+                                    <option value="M2">Master 2</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_type_contrat" class="form-label">Type de contrat*</label>
+                                <select class="form-select" id="id_type_contrat" name="type_contrat" required>
+                                    <option value="">Sélectionnez...</option>
+                                    <option value="stage_obligatoire">Stage obligatoire</option>
+                                    <option value="stage_facultatif">Stage facultatif</option>
+                                    <option value="alternance">Alternance</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_localisation" class="form-label">Localisation*</label>
+                            <input type="text" class="form-control" id="id_localisation" 
+                                   name="localisation" 
+                                   value="{{ form.localisation.value|default:'' }}" required>
+                            <small class="text-muted">Ville ou télétravail</small>
+                        </div>
+
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Informations complémentaires</h4>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_avantages" class="form-label">Avantages</label>
+                            <textarea class="form-control" id="id_avantages" name="avantages" rows="2">
+                                {{ form.avantages.value|default:'' }}
+                            </textarea>
+                            <small class="text-muted">
+                                Tickets restaurant, transport, etc.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_documents_requis" class="form-label">Documents à fournir</label>
+                            <textarea class="form-control" id="id_documents_requis" 
+                                      name="documents_requis" rows="2">
+                                {{ form.documents_requis.value|default:'CV\nLettre de motivation' }}
+                            </textarea>
+                            <small class="text-muted">Un document par ligne</small>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="id_est_active" 
+                                   name="est_active" checked>
+                            <label class="form-check-label" for="id_est_active">
+                                Publier cette offre immédiatement
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'dashboard_entreprise' %}" class="btn btn-outline-secondary me-md-2">
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i> Publier l'offre
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.form-control, .form-select {
+    padding: 10px;
+    border-radius: 5px;
+}
+
+textarea.form-control {
+    min-height: 100px;
+}
+
+.help-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem !important;
+    }
+}
+</style>
+
+<script>
+// Initialiser les sélecteurs avec les valeurs existantes
+document.addEventListener('DOMContentLoaded', function() {
+    // Date limite - min = aujourd'hui
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('id_date_limite').min = today;
+    
+    // Pré-remplir les sélecteurs si valeurs existantes
+    {% if form.niveau_etude.value %}
+    document.getElementById('id_niveau_etude').value = "{{ form.niveau_etude.value }}";
+    {% endif %}
+    
+    {% if form.type_contrat.value %}
+    document.getElementById('id_type_contrat').value = "{{ form.type_contrat.value }}";
+    {% endif %}
+});
+
+// Empêcher les dates passées
+document.getElementById('id_date_limite').addEventListener('change', function(e) {
+    const today = new Date().toISOString().split('T')[0];
+    if (e.target.value < today) {
+        alert("La date limite ne peut pas être dans le passé");
+        e.target.value = today;
+    }
+});
+</script>
+{% endblock %}

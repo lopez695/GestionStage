@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Postuler à l'offre{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">Postuler à l'offre : {{ offre.titre }}</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'nouvelle_candidature' offre_id=offre.id %}">
+                        {% csrf_token %}
+                        
+                        <!-- Affichage des erreurs générales -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Champ CV -->
+                        <div class="mb-3">
+                            <label for="{{ form.cv.id_for_label }}" class="form-label">CV (PDF uniquement)</label>
+                            <input type="file" class="form-control" id="{{ form.cv.id_for_label }}" 
+                                   name="{{ form.cv.name }}" accept=".pdf" required>
+                            {% for error in form.cv.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Champ Lettre de motivation -->
+                        <div class="mb-3">
+                            <label for="{{ form.lettre_motivation.id_for_label }}" class="form-label">
+                                Lettre de motivation (PDF uniquement)
+                            </label>
+                            <input type="file" class="form-control" id="{{ form.lettre_motivation.id_for_label }}" 
+                                   name="{{ form.lettre_motivation.name }}" accept=".pdf">
+                            {% for error in form.lettre_motivation.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Champ Message -->
+                        <div class="mb-3">
+                            <label for="{{ form.message.id_for_label }}" class="form-label">Message complémentaire</label>
+                            <textarea class="form-control" id="{{ form.message.id_for_label }}" 
+                                      name="{{ form.message.name }}" rows="4"></textarea>
+                            {% for error in form.message.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'detail_offre' offre.id %}" class="btn btn-secondary me-md-2">
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                Envoyer ma candidature
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

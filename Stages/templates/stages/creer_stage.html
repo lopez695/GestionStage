@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <h2>{{ title }}</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="offre" class="form-label">Offre acceptée</label>
+            <select name="offre" id="offre" class="form-select" required>
+                <option value="">Sélectionner une offre</option>
+                {% for candidature in candidatures %}
+                    <option value="{{ candidature.offre.id }}">
+                        {{ candidature.offre.titre }} - {{ candidature.offre.entreprise.nom }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="sujet" class="form-label">Sujet du stage</label>
+            <input type="text" name="sujet" id="sujet" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="date_debut" class="form-label">Date de début</label>
+            <input type="date" name="date_debut" id="date_debut" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="date_fin" class="form-label">Date de fin</label>
+            <input type="date" name="date_fin" id="date_fin" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Créer le stage</button>
+    </form>
+</div>
+{% endblock %}

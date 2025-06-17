@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajouter un Document{% endblock %}
+{% block page_title %}Ajouter un Document{% endblock %}
+
+{% block page_actions %}
+<a href="{% url 'liste_documents_stage' stage.id %}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-arrow-left"></i> Retour
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Nouveau document pour le stage chez {{ stage.candidature.offre.entreprise.nom }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.type_document.id_for_label }}" class="form-label">Type de document</label>
+                        {{ form.type_document }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.nom.id_for_label }}" class="form-label">Nom du document</label>
+                        {{ form.nom }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ form.fichier.id_for_label }}" class="form-label">Fichier</label>
+                        {{ form.fichier }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Téléverser
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Types de documents</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="bi bi-file-contract text-primary me-2"></i>
+                        Convention de stage
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-file-earmark-text text-success me-2"></i>
+                        Rapport de stage
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-journal-text text-info me-2"></i>
+                        Journal de bord
+                    </li>
+                    <li class="list-group-item">
+                        <i class="bi bi-file-earmark text-secondary me-2"></i>
+                        Autre document
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

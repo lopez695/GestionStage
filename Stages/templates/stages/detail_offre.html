@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ offre.titre }} | {{ offre.entreprise.nom }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <!-- Bouton Retour -->
+    <div class="mb-4">
+        {% if user.role == 'ENTREPRISE' %}
+        <a href="{% url 'dashboard_entreprise' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Retour
+        </a>
+        {% else %}
+        <a href="{% url 'accueil' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i> Retour
+        </a>
+        {% endif %}
+    </div>
+
+    <div class="row justify-content-center">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- Carte Entête -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h1 class="h4 mb-0 text-primary">{{ offre.titre }}</h1>
+                            <div class="d-flex align-items-center mt-2">
+                                <img src="{% if offre.entreprise.logo %}{{ offre.entreprise.logo.url }}{% else %}{% static 'images/default-company.png' %}{% endif %}" 
+                                     class="rounded-circle me-2" width="32" height="32" alt="Logo {{ offre.entreprise.nom }}">
+                                <span class="text-muted">{{ offre.entreprise.nom }}</span>
+                            </div>
+                        </div>
+                        {% if user.is_authenticated and user == offre.entreprise.user %}
+                        <div class="btn-group">
+                            <a href="{% url 'modifier_offre' offre.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-edit fa-fw"></i> Modifier
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash fa-fw"></i> Supprimer
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Statut et dates -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="badge rounded-pill bg-{% if offre.est_active %}success{% else %}secondary{% endif %} me-2">
+                                {% if offre.est_active %}Active{% else %}Expirée{% endif %}
+                            </span>
+                            <span class="text-muted small">
+                                <i class="far fa-clock me-1"></i>
+                                Publiée le {{ offre.date_publication|date:"d/m/Y" }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="badge bg-light text-dark">
+                                <i class="fas fa-users me-1"></i>
+                                {{ offre.candidatures.count }} candidature{{ offre.candidatures.count|pluralize }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h5 class="d-flex align-items-center mb-3">
+                            <i class="fas fa-align-left text-primary me-2"></i>
+                            Description du poste
+                        </h5>
+                        <div class="ps-4">
+                            {% if offre.description %}
+                                {{ offre.description|linebreaks }}
+                            {% else %}
+                                <p class="text-muted fst-italic">Aucune description fournie</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Compétences et Infos -->
+                    <div class="row g-3">
+                        <!-- Compétences -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-tasks text-info me-2"></i>
+                                        Compétences requises
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if offre.competences_requises %}
+                                        {{ offre.competences_requises|linebreaks }}
+                                    {% else %}
+                                        <p class="text-muted fst-italic">Aucune compétence spécifiée</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Infos pratiques -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle text-warning me-2"></i>
+                                        Informations pratiques
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li class="mb-3">
+                                            <div class="d-flex">
+                                                <i class="fas fa-map-marker-alt text-primary mt-1 me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-0">Localisation</h6>
+                                                    <p>{{ offre.entreprise.adresse|default:"Non spécifiée" }}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="mb-3">
+                                            <div class="d-flex">
+                                                <i class="fas fa-hourglass-end text-primary mt-1 me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-0">Date limite</h6>
+                                                    <p class="{% if offre.date_limite < now %}text-danger{% endif %}">
+                                                        {{ offre.date_limite|date:"d/m/Y" }}
+                                                        {% if offre.date_limite > now %}
+                                                        <small class="text-muted">({{ offre.date_limite|timeuntil }} restant)</small>
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="d-flex">
+                                                <i class="fas fa-building text-primary mt-1 me-3"></i>
+                                                <div>
+                                                    <h6 class="mb-0">Type de poste</h6>
+                                                    <p>{{ offre.get_type_stage_display|default:"Non spécifié" }}</p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Entreprise -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building text-secondary me-2"></i>
+                        À propos de l'entreprise
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3 text-center mb-3 mb-md-0">
+                            <img src="{% if offre.entreprise.logo %}{{ offre.entreprise.logo.url }}{% else %}{% static 'images/default-company.png' %}{% endif %}" 
+                                 class="img-fluid rounded-circle border" style="max-height: 120px;" alt="Logo {{ offre.entreprise.nom }}">
+                        </div>
+                        <div class="col-md-9">
+                            <h4>{{ offre.entreprise.nom }}</h4>
+                            <div class="mb-3">
+                                {% if offre.entreprise.description %}
+                                    {{ offre.entreprise.description|linebreaks }}
+                                {% else %}
+                                    <p class="text-muted fst-italic">Aucune description disponible</p>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if offre.entreprise.secteur %}
+                                <span class="badge bg-light text-dark">
+                                    <i class="fas fa-industry me-1"></i> {{ offre.entreprise.secteur }}
+                                </span>
+                                {% endif %}
+                                {% if offre.entreprise.site_web %}
+                                <a href="{{ offre.entreprise.site_web }}" target="_blank" class="badge bg-light text-dark text-decoration-none">
+                                    <i class="fas fa-globe me-1"></i> Site web
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- CTA Postuler -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Postuler
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if user.is_authenticated and user.role == 'ETUDIANT' %}
+                        {% if deja_postule %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            Vous avez déjà postulé à cette offre
+                        </div>
+                        {% elif offre.est_active %}
+                        <a href="{% url 'postuler' offre.id %}" class="btn btn-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-paper-plane me-2"></i> Postuler maintenant
+                        </a>
+                        <p class="small text-muted">
+                            Date limite : {{ offre.date_limite|date:"d/m/Y" }}
+                        </p>
+                        {% else %}
+                        <div class="alert alert-secondary">
+                            <i class="fas fa-times-circle me-2"></i>
+                            Cette offre n'est plus active
+                        </div>
+                        {% endif %}
+                    {% else %}
+                       
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Détails rapides -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Détails de l'offre
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-briefcase me-2 text-muted"></i> Type</span>
+                            <span class="fw-medium">{{ offre.get_type_stage_display|default:"Non spécifié" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-map-marker-alt me-2 text-muted"></i> Localisation</span>
+                            <span class="fw-medium">{{ offre.entreprise.adresse|default:"Non spécifiée" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-alt me-2 text-muted"></i> Durée</span>
+                            <span class="fw-medium">{{ offre.duree_semaines }} semaines</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-calendar-day me-2 text-muted"></i> Début</span>
+                            <span class="fw-medium">
+                                {% if offre.date_debut %}
+                                    {{ offre.date_debut|date:"d/m/Y" }}
+                                {% else %}
+                                    Non spécifiée
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-money-bill-wave me-2 text-muted"></i> Rémunération</span>
+                            <span class="fw-medium">
+                                {% if offre.remuneration %}
+                                    {{ offre.remuneration }} CFA/mois
+                                {% else %}
+                                    Non spécifiée
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-hourglass-end me-2 text-muted"></i> Date limite</span>
+                            <span class="fw-medium {% if offre.date_limite < today %}text-danger{% elif offre.date_limite < today_plus_7 %}text-warning{% endif %}">
+                                {{ offre.date_limite|date:"d/m/Y" }}
+                            </span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Autres offres -->
+            {% if autres_offres %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>
+                        Autres offres
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for autre in autres_offres %}
+                        <a href="{% url 'detail_offre' autre.id %}" class="list-group-item list-group-item-action border-0 rounded mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <img src="{% if autre.entreprise.logo %}{{ autre.entreprise.logo.url }}{% else %}{% static 'images/default-company.png' %}{% endif %}" 
+                                         class="rounded-circle" width="40" height="40" alt="{{ autre.entreprise.nom }}">
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">{{ autre.titre }}</h6>
+                                    <small class="text-muted">{{ autre.entreprise.nom }}</small>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de suppression -->
+{% if user.is_authenticated and user == offre.entreprise.user %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer définitivement cette offre ?</p>
+                <p class="fw-bold">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{% url 'supprimer_offre' offre.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    .badge {
+        font-weight: 500;
+    }
+    .text-warning {
+        color: #ffc107 !important;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Modifier l'offre de stage{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0">
+                            <i class="fas fa-edit me-2"></i> Modifier l'offre
+                        </h2>
+                        <a href="{% url 'detail_offre' offre.id %}" class="btn btn-sm btn-light">
+                            <i class="fas fa-eye me-1"></i> Voir l'offre
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Les champs marqués d'un astérisque (*) sont obligatoires.
+                        </div>
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Erreurs dans le formulaire :</strong>
+                            <ul>
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>{{ field|title }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.titre.id_for_label }}" class="form-label">
+                                    {{ form.titre.label }}*
+                                </label>
+                                {{ form.titre }}
+                                {% if form.titre.help_text %}
+                                <small class="form-text text-muted">{{ form.titre.help_text }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.duree_semaines.id_for_label }}" class="form-label">
+                                    {{ form.duree_semaines.label }}*
+                                </label>
+                                {{ form.duree_semaines }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}*
+                            </label>
+                            {{ form.description }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.competences_requises.id_for_label }}" class="form-label">
+                                {{ form.competences_requises.label }}*
+                            </label>
+                            {{ form.competences_requises }}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.date_limite.id_for_label }}" class="form-label">
+                                    {{ form.date_limite.label }}*
+                                </label>
+                                {{ form.date_limite }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.remuneration.id_for_label }}" class="form-label">
+                                    {{ form.remuneration.label }}
+                                </label>
+                                {{ form.remuneration }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.date_debut.id_for_label }}" class="form-label">
+                                    {{ form.date_debut.label }}
+                                </label>
+                                {{ form.date_debut }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.type_stage.id_for_label }}" class="form-label">
+                                    Type de stage*
+                                </label>
+                                {{ form.type_stage }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="id_niveau_etude" class="form-label">
+                                    Niveau d'étude requis
+                                </label>
+                                <select class="form-select" id="id_niveau_etude" name="niveau_etude">
+                                    <option value="">Non spécifié</option>
+                                    <option value="L1" {% if form.niveau_etude.value == "L1" %}selected{% endif %}>Licence 1</option>
+                                    <option value="L2" {% if form.niveau_etude.value == "L2" %}selected{% endif %}>Licence 2</option>
+                                    <option value="L3" {% if form.niveau_etude.value == "L3" %}selected{% endif %}>Licence 3</option>
+                                    <option value="M1" {% if form.niveau_etude.value == "M1" %}selected{% endif %}>Master 1</option>
+                                    <option value="M2" {% if form.niveau_etude.value == "M2" %}selected{% endif %}>Master 2</option>
+                                    <option value="D" {% if form.niveau_etude.value == "D" %}selected{% endif %}>Doctorat</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch mb-4">
+                            {{ form.est_active }}
+                            <label class="form-check-label" for="{{ form.est_active.id_for_label }}">
+                                Offre active et visible
+                            </label>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-1"></i> Enregistrer
+                            </button>
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-1"></i> Supprimer
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer définitivement cette offre de stage ?</p>
+                <p class="fw-bold">Cette action est irréversible et supprimera également toutes les candidatures associées.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="post" action="{% url 'supprimer_offre' offre.id %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Confirmer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.form-control, .form-select {
+    padding: 10px;
+    border-radius: 5px;
+}
+
+textarea.form-control {
+    min-height: 100px;
+}
+
+.form-check-input {
+    width: 2.5em;
+    height: 1.5em;
+}
+
+.invalid-feedback {
+    display: block;
+    color: #dc3545;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation de la date limite
+    const dateLimite = document.getElementById('id_date_limite');
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (dateLimite) {
+        dateLimite.addEventListener('change', function() {
+            if (this.value < today) {
+                alert("La date limite ne peut pas être dans le passé");
+                this.value = today;
+            }
+        });
+    }
+    
+    // Validation date début < date limite
+    const dateDebut = document.getElementById('id_date_debut');
+    if (dateDebut && dateLimite) {
+        dateDebut.addEventListener('change', function() {
+            if (dateLimite.value && this.value > dateLimite.value) {
+                alert("La date de début doit être antérieure à la date limite");
+                this.value = '';
+            }
+        });
+    }
+    
+    // Confirmation avant suppression
+    const deleteBtn = document.querySelector('[data-bs-target="#deleteModal"]');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+        });
+    }
+});
+</script>
+{% endblock %}

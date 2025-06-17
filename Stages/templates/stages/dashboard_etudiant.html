@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Tableau de Bord Étudiant{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- ... (contenu existant jusqu'à la section Tâches) ... -->
+
+    <!-- Tâches à faire - Section Corrigée -->
+    <div class="card mt-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Mes tâches</h5>
+            <div>
+                <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    <i class="fas fa-plus me-1"></i> Ajouter
+                </button>
+                <a href="{% url 'task_list' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-list me-1"></i> Consulter toutes les tâches
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if tasks %}
+            <div class="list-group">
+                {% for task in tasks|slice:":5" %}
+                <div class="list-group-item d-flex justify-content-between align-items-center {% if task.completed %}list-group-item-light{% endif %}">
+                    <div>
+                        <div class="d-flex align-items-center">
+                            {% if task.completed %}
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0 {% if task.completed %}text-muted text-decoration-line-through{% endif %}">
+                                    {{ task.title }}
+                                </h6>
+                                {% if task.description %}
+                                <small class="text-muted">{{ task.description|truncatechars:50 }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if task.due_date %}
+                        <small class="text-{% if task.is_overdue %}danger{% else %}muted{% endif %}">
+                            <i class="far fa-calendar-alt me-1"></i>
+                            {{ task.due_date|date:"d/m/Y" }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group">
+                        <a href="{% url 'complete_task' task.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-check"></i>
+                        </a>
+                        <a href="{% url 'delete_task' task.id %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash-alt"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if tasks.count > 5 %}
+            <div class="text-center mt-3">
+                <a href="{% url 'task_list' %}" class="btn btn-sm btn-outline-secondary">
+                    Voir plus de tâches ({{ tasks.count }} au total)
+                </a>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-tasks fa-3x mb-3"></i>
+                <h5>Aucune tâche</h5>
+                <p>Ajoutez des tâches pour organiser votre recherche de stage</p>
+                <button class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    <i class="fas fa-plus me-1"></i> Ajouter une tâche
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal d'ajout de tâche -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'task_list' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Ajouter une tâche</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Titre*</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" rows="3" placeholder="Décrivez la tâche en détails..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date limite</label>
+                        <input type="date" class="form-control" name="due_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div>
+    <!-- Section pour les stages -->
+    <div class="card mt-4">
+       <div class="row">
+    <!-- Stages en cours -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-spinner me-2"></i>Stages en cours
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if stages_en_cours %}
+                    {% for stage in stages_en_cours %}
+                    <div class="mb-3 p-3 border rounded">
+                        <h6>{{ stage.candidature.offre.titre }}</h6>
+                        <p class="mb-1">
+                            <small>Entreprise: {{ stage.candidature.offre.entreprise.nom }}</small>
+                        </p>
+                        <div class="progress mb-2" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped" 
+                                 role="progressbar" 
+                                 style="width: {{ stage.pourcentage_complete }}%">
+                                {{ stage.pourcentage_complete }}%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between small">
+                            <span>Début: {{ stage.date_debut|date:"d/m/Y" }}</span>
+                            <span>Fin: {{ stage.date_fin|date:"d/m/Y" }}</span>
+                            <span>{{ stage.jours_restants }}j restants</span>
+                        </div>
+                        <a href="{% url 'detail_stage' stage.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                            Détails
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucun stage en cours</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tâches à faire -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>Tâches à faire
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if tasks %}
+                <ul class="list-group list-group-flush">
+                    {% for task in tasks %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ task.title }}</h6>
+                            {% if task.due_date %}
+                            <small class="text-{% if task.due_date < aujourdhui %}danger{% else %}muted{% endif %}">
+                                Échéance: {{ task.due_date|date:"d/m/Y" }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'complete_task' task.id %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-check"></i>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'task_list' %}" class="btn btn-sm btn-outline-primary mt-3">
+                    Voir toutes les tâches
+                </a>
+                {% else %}
+                <p class="text-muted">Aucune tâche en cours</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Documents et rapports récents -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>Derniers documents
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if documents_recents %}
+                <ul class="list-group">
+                    {% for doc in documents_recents %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <i class="fas fa-{{ doc.type_icon }} text-{{ doc.type_color }} me-2"></i>
+                                {{ doc.nom }}
+                            </div>
+                            <small class="text-muted">{{ doc.date_upload|date:"d/m/Y" }}</small>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">Aucun document récent</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-contract me-2"></i>Derniers rapports
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if rapports_recents %}
+                <ul class="list-group">
+                    {% for rapport in rapports_recents %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                Rapport du {{ rapport.date_soumission|date:"d/m/Y" }}
+                                <span class="badge bg-{% if rapport.statut == 'valide' %}success{% else %}warning{% endif %}">
+                                    {{ rapport.get_statut_display }}
+                                </span>
+                            </div>
+                            <a href="{% url 'detail_rapport' rapport.id %}" class="btn btn-sm btn-outline-primary">
+                                Voir
+                            </a>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">Aucun rapport récent</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+    </div>
+</div>
+
+{% endblock %}
