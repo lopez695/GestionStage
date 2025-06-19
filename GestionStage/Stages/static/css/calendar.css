@@ -1,0 +1,10 @@
+/* static/css/calendar.css */
+.teacher-calendar {
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+/* [Tout le CSS que je vous ai fourni précédemment] */

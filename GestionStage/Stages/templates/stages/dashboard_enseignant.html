@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tableau de Bord Enseignant{% endblock %}
+
+{% block content %}
+<div class="teacher-dashboard">
+    <!-- Header Bar --><header class="dashboard-header bg-primary text-white p-3 shadow-sm">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <button class="menu-toggle btn btn-light me-3">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="dashboard-title mb-0">
+                <i class="fas fa-chalkboard-teacher me-2"></i>Tableau de Bord Enseignant
+            </h1>
+        </div>
+        
+        <div class="d-flex align-items-center">
+           
+            
+           {{ enseignant.first_name }} {{ enseignant.last_name }}
+           
+   
+
+        </div>
+    </div>
+</header>
+
+    <!-- Main Content -->
+    <div class="dashboard-container d-flex">
+        <!-- Sidebar -->
+        <aside class="dashboard-sidebar bg-light border-end" style="width: 250px;">
+            <div class="sidebar-header p-3 border-bottom">
+                <h3 class="mb-0 fs-5 fw-bold">Navigation</h3>
+            </div>
+            
+            <nav class="sidebar-nav p-2">
+                <div class="nav-group">
+                    <a href="{% url 'dashboard_enseignant' %}" class="nav-item d-flex align-items-center p-2 rounded active">
+                        <div class="nav-icon me-3"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="nav-text">Tableau de bord</div>
+                    </a>
+                    
+                    <div class="dropdown-nav">
+                        <a href="{% url 'liste_etudiants' %}" class="nav-item d-flex align-items-center p-2 rounded justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="nav-icon me-3"><i class="fas fa-users"></i></div>
+                                <div class="nav-text">Mes Étudiants</div>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ stats.etudiants_suivis }}</span>
+                        </a>
+                        
+                        <!-- Sous-menu Étudiants -->
+                        <div class="sub-menu ps-4">
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">Liste complète</a>
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">Par promotion</a>
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">En stage</a>
+                        </div>
+                    </div>
+                    
+                    <a href="{% url 'liste_rapports' %}" class="nav-item d-flex align-items-center p-2 rounded justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <div class="nav-icon me-3"><i class="fas fa-file-alt"></i></div>
+                            <div class="nav-text">Rapports à valider</div>
+                        </div>
+                        {% if stats.rapports_a_valider > 0 %}
+                        <span class="badge bg-danger rounded-pill">{{ stats.rapports_a_valider }}</span>
+                        {% endif %}
+                    </a>
+                    
+                    <div class="dropdown-nav">
+                        <a href="{% url 'offres' %}" class="nav-item d-flex align-items-center p-2 rounded justify-content-between">
+                            <div class="d-flex align-items-center">
+                                <div class="nav-icon me-3"><i class="fas fa-briefcase"></i></div>
+                                <div class="nav-text">Gestion des Stages</div>
+                            </div>
+                            <span class="badge bg-info rounded-pill">{{ stats.stages_en_cours }}</span>
+                        </a>
+                        
+                        <!-- Sous-menu Stages -->
+                        <div class="sub-menu ps-4">
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">Offres de stage</a>
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">Conventions</a>
+                            <a href="#" class="nav-item d-block py-1 text-decoration-none">Suivi des stages</a>
+                        </div>
+                    </div>
+                    
+                     {% if request.user.conversations1.exists %}
+        <a class="nav-link dropdown-toggle {% if page_active == 'messagerie' %}active{% endif %}" 
+           href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-envelope me-2"></i>Messagerie
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'messagerie' request.user.conversations1.first.id %}">Dernière conversation</a></li>
+            {% for conversation in request.user.conversations1.all|slice:":5" %}
+                <li><a class="dropdown-item" href="{% url 'messagerie' conversation.id %}">
+                    Conversation avec {{ conversation.participant2.username }}
+                </a></li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'nouvelle_conversation' %}">Nouveau message</a></li>
+        </ul>
+    {% else %}
+        <a class="nav-link {% if page_active == 'messagerie' %}active{% endif %}" 
+           href="{% url 'envoyer_message' user.id %}">
+            <i class="bi bi-envelope me-2"></i>Messagerie
+        </a>
+    {% endif %}
+                    
+                    <div class="sidebar-divider my-2 border-top"></div>
+                    
+                    <a href="{% url 'calendrier' %}" class="nav-item">
+                        <div class="nav-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="nav-text">Calendrier</div>
+                    </a>
+
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main-content flex-grow-1 p-4">
+            <!-- Le contenu principal de votre dashboard ira ici -->
+            
+               
+           
+        </main>
+         {% endblock %}
+    </div>
+</div>
+
+<style>
+    .teacher-dashboard {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .dashboard-header {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+    
+    .dashboard-container {
+        flex: 1;
+    }
+    
+    .dashboard-sidebar {
+        position: sticky;
+        top: 70px;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+        transition: all 0.3s;
+    }
+    
+    .nav-item {
+        color: #333;
+        transition: all 0.2s;
+    }
+    
+    .nav-item:hover, .nav-item.active {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .nav-item.active {
+        font-weight: 500;
+    }
+    
+    .sub-menu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+    
+    .dropdown-nav:hover .sub-menu {
+        max-height: 200px;
+    }
+    
+    .profile-img {
+        object-fit: cover;
+    }
+
+
+    <style>
+    /* Style amélioré pour la barre de recherche */
+    .input-group-text {
+        transition: all 0.3s ease;
+    }
+    
+    .input-group:focus-within .input-group-text {
+        color: #0d6efd;
+    }
+    
+    .dashboard-header .form-control {
+        min-width: 250px;
+        transition: all 0.3s ease;
+    }
+    
+    .dashboard-header .form-control:focus {
+        box-shadow: none;
+        border-color: #dee2e6;
+    }
+    
+    .profile-img {
+        border: 2px solid rgba(255,255,255,0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .profile-img:hover {
+        border-color: rgba(255,255,255,0.7);
+    }
+    .dashboard-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    // Script pour gérer le toggle du menu
+    document.querySelector('.menu-toggle').addEventListener('click', function() {
+        document.querySelector('.dashboard-sidebar').classList.toggle('collapsed');
+    });
+    
+    // Script pour les sous-menus
+    document.querySelectorAll('.dropdown-nav').forEach(item => {
+        item.addEventListener('click', function(e) {
+            if (e.target.closest('a.nav-item')) {
+                this.querySelector('.sub-menu').classList.toggle('show');
+            }
+        });
+    });
+</script>

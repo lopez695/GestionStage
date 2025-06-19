@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Candidature de {{ candidature.etudiant.user.get_full_name }}{% endblock %}
+
+{% block css %}
+<style>
+    .document-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .document-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .step-progress {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        margin: 2rem 0;
+    }
+    .step-progress::before {
+        content: '';
+        position: absolute;
+        top: 15px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: #e9ecef;
+        z-index: 1;
+    }
+    .step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+    }
+    .step-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+        border: 3px solid white;
+    }
+    .step.done .step-icon {
+        background: #28a745;
+        color: white;
+    }
+    .step.current .step-icon {
+        background: #007bff;
+        color: white;
+    }
+    .step-text {
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 100px;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 7px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background: #dee2e6;
+    }
+    .timeline-badge {
+        position: absolute;
+        left: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #6c757d;
+    }
+    .timeline-item.accepted .timeline-badge {
+        background: #28a745;
+    }
+    .timeline-item.rejected .timeline-badge {
+        background: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <!-- Header Card -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="h5 mb-0">
+                            <i class="fas fa-file-alt me-2"></i>
+                            Candidature pour {{ candidature.offre.titre }}
+                        </h2>
+                        <small class="text-white-50">
+                            Postulée le {{ candidature.date_postulation|date:"d/m/Y à H:i" }}
+                        </small>
+                    </div>
+                    <div>
+                        <span class="badge bg-{% if candidature.statut == 'ACCEPTEE' %}success{% elif candidature.statut == 'REFUSEE' %}danger{% else %}warning{% endif %}">
+                            {{ candidature.get_statut_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            {% if candidature.etudiant.user.photo %}
+                            <img src="{{ candidature.etudiant.user.photo.url }}" 
+                                 class="rounded-circle img-thumbnail mb-3" 
+                                 width="100" height="100" 
+                                 alt="Photo de {{ candidature.etudiant.user.get_full_name }}">
+                            {% else %}
+                            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto mb-3" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="fas fa-user text-white fa-3x"></i>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-5">
+                            <h4 class="mb-1">{{ candidature.etudiant.user.get_full_name }}</h4>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-graduation-cap me-1"></i>
+                                {{ candidature.etudiant.filiere.nom }} - Promotion {{ candidature.etudiant.promotion }}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-envelope me-1"></i>
+                                {{ candidature.etudiant.user.email }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-phone me-1"></i>
+                                {{ candidature.etudiant.telephone|default:"Non renseigné" }}
+                            </p>
+                        </div>
+                        <div class="col-md-5">
+                            <h5 class="mb-1">{{ candidature.offre.entreprise.nom }}</h5>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ candidature.offre.localisation }}
+                            </p>
+                            <p class="text-muted mb-1">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                Du {{ candidature.offre.date_debut|date:"d/m/Y" }} au {{ candidature.offre.date_fin|date:"d/m/Y" }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-user-tie me-1"></i>
+                                Contact: {{ candidature.offre.contact_email }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Section -->
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="card document-card h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-file-pdf text-danger me-1"></i>
+                                Curriculum Vitae
+                            </h6>
+                            {% if user.role == 'ETUDIANT' %}
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadCvModal">
+                                <i class="fas fa-upload me-1"></i> Modifier
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-file-pdf fa-4x text-danger"></i>
+                            </div>
+                            <p class="mb-2 text-truncate">
+                                {{ candidature.cv.name|cut:"candidatures/cv/" }}
+                            </p>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="{{ candidature.cv.url }}" download class="btn btn-sm btn-outline-primary me-md-2">
+                                    <i class="fas fa-download me-1"></i> Télécharger
+                                </a>
+                                <a href="{{ candidature.cv.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-eye me-1"></i> Visualiser
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                Dernière modification: {{ candidature.cv_updated_at|date:"d/m/Y H:i"|default:"-" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card document-card h-100">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-file-alt text-primary me-1"></i>
+                                Lettre de motivation
+                            </h6>
+                            {% if user.role == 'ETUDIANT' %}
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#uploadLettreModal">
+                                <i class="fas fa-upload me-1"></i> Modifier
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-file-alt fa-4x text-primary"></i>
+                            </div>
+                            <p class="mb-2 text-truncate">
+                                {{ candidature.lettre_motivation.name|cut:"candidatures/lettres/" }}
+                            </p>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <a href="{{ candidature.lettre_motivation.url }}" download class="btn btn-sm btn-outline-primary me-md-2">
+                                    <i class="fas fa-download me-1"></i> Télécharger
+                                </a>
+                                <a href="{{ candidature.lettre_motivation.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-eye me-1"></i> Visualiser
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                Dernière modification: {{ candidature.lettre_updated_at|date:"d/m/Y H:i"|default:"-" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Informations complémentaires
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Disponibilités de l'étudiant</h6>
+                            <p>{{ candidature.disponibilites|default:"Non précisé" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Commentaires supplémentaires</h6>
+                            <p>{{ candidature.commentaires|default:"Aucun commentaire" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeline -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-1"></i>
+                        Historique de la candidature
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if candidature.historique.exists %}
+                    <div class="timeline">
+                        {% for log in candidature.historique.all %}
+                        <div class="timeline-item {% if log.action == 'ACCEPTEE' %}accepted{% elif log.action == 'REFUSEE' %}rejected{% endif %}">
+                            <div class="timeline-badge"></div>
+                            <div class="timeline-content">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ log.get_action_display }}</strong>
+                                    <small class="text-muted">{{ log.date|date:"d/m/Y H:i" }}</small>
+                                </div>
+                                {% if log.message %}
+                                <p class="mb-0">{{ log.message }}</p>
+                                {% endif %}
+                                <small class="text-muted">Par {{ log.utilisateur.get_full_name }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">Aucun historique enregistré.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Next Steps (if accepted) -->
+            {% if candidature.statut == 'ACCEPTEE' and candidature.stage_rel %}
+            <div class="card mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-forward me-1"></i>
+                        Prochaines étapes
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="step-progress">
+                        <div class="step done">
+                            <span class="step-icon">1</span>
+                            <span class="step-text">Candidature acceptée</span>
+                        </div>
+                        <div class="step {% if candidature.stage_rel.statut != 'en_attente' %}done{% endif %}">
+                            <span class="step-icon">2</span>
+                            <span class="step-text">Validation enseignant</span>
+                        </div>
+                        <div class="step {% if candidature.stage_rel.valide %}done{% endif %}">
+                            <span class="step-icon">3</span>
+                            <span class="step-text">Convention signée</span>
+                        </div>
+                        <div class="step {% if candidature.stage_rel.date_debut <= today %}done{% endif %}">
+                            <span class="step-icon">4</span>
+                            <span class="step-text">Début du stage</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div>
+                            <h6 class="mb-1">Stage associé</h6>
+                            <p class="mb-0 text-muted">
+                                Statut: <span class="badge bg-{% if candidature.stage_rel.statut == 'accepte' %}success{% elif candidature.stage_rel.statut == 'refuse' %}danger{% else %}warning{% endif %}">
+                                    {{ candidature.stage_rel.get_statut_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <a href="{% url 'detail_stage' candidature.stage_rel.id %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-external-link-alt me-1"></i> Voir le stage
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            {% if user.role == 'ENTREPRISE' and candidature.offre.entreprise.user == user %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        {% if candidature.statut == 'EN_ATTENTE' %}
+                        <button class="btn btn-success flex-grow-1 me-2" data-bs-toggle="modal" data-bs-target="#acceptModal">
+                            <i class="fas fa-check-circle me-1"></i> Accepter
+                        </button>
+                        <button class="btn btn-danger flex-grow-1 ms-2" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                            <i class="fas fa-times-circle me-1"></i> Refuser
+                        </button>
+                        {% else %}
+                        <div class="alert alert-{% if candidature.statut == 'ACCEPTEE' %}success{% else %}danger{% endif %} w-100 mb-0">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Cette candidature a déjà été {% if candidature.statut == 'ACCEPTEE' %}acceptée{% else %}refusée{% endif %} le {{ candidature.date_modification|date:"d/m/Y" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% if user.role == 'ETUDIANT' %}
+<!-- CV Modal -->
+<div class="modal fade" id="uploadCvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mettre à jour le CV</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'modifier_candidature' candidature.id %}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="document_type" value="cv">
+                    <div class="mb-3">
+                        <label for="cv" class="form-label">Nouveau fichier CV (PDF uniquement, max 5MB)</label>
+                        <input type="file" class="form-control" id="cv" name="cv" accept=".pdf" required>
+                        <div class="form-text">Votre CV doit être au format PDF et ne pas dépasser 5MB.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Lettre Modal -->
+<div class="modal fade" id="uploadLettreModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mettre à jour la lettre de motivation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'modifier_candidature' candidature.id %}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <input type="hidden" name="document_type" value="lettre">
+                    <div class="mb-3">
+                        <label for="lettre_motivation" class="form-label">Nouvelle lettre (PDF uniquement, max 5MB)</label>
+                        <input type="file" class="form-control" id="lettre_motivation" name="lettre_motivation" accept=".pdf" required>
+                        <div class="form-text">Votre lettre doit être au format PDF et ne pas dépasser 5MB.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if user.role == 'ENTREPRISE' %}
+<!-- Accept Modal -->
+<div class="modal fade" id="acceptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Confirmer l'acceptation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="acceptForm" method="post" action="{% url 'accepter_candidature' candidature.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <p>Vous êtes sur le point d'accepter la candidature de <strong>{{ candidature.etudiant.user.get_full_name }}</strong>.</p>
+                    
+                    <div class="mb-3">
+                        <label for="acceptMessage" class="form-label">Message à l'étudiant (optionnel) :</label>
+                        <textarea class="form-control" id="acceptMessage" name="message" rows="3" 
+                                  placeholder="Ex: Félicitations ! Nous sommes ravis de vous accueillir dans notre équipe..."></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="createStage" name="create_stage" checked>
+                        <label class="form-check-label" for="createStage">
+                            Créer automatiquement un dossier de stage associé
+                        </label>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Une notification sera envoyée à l'étudiant et à son enseignant référent.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">Confirmer l'acceptation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Confirmer le refus</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="post" action="{% url 'refuser_candidature' candidature.id %}">
+                <div class="modal-body">
+                    {% csrf_token %}
+                    <p>Vous êtes sur le point de refuser la candidature de <strong>{{ candidature.etudiant.user.get_full_name }}</strong>.</p>
+                    
+                    <div class="mb-3">
+                        <label for="rejectReason" class="form-label">Motif du refus (recommandé) :</label>
+                        <textarea class="form-control" id="rejectReason" name="reason" rows="3" 
+                                  placeholder="Ex: Nous avons trouvé un profil plus correspondant à nos besoins..."></textarea>
+                        <div class="form-text">Ce message sera transmis à l'étudiant.</div>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Cette action est irréversible. Une notification sera envoyée à l'étudiant.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Confirmer le refus</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des formulaires d'acceptation/refus
+    const acceptForm = document.getElementById('acceptForm');
+    const rejectForm = document.getElementById('rejectForm');
+    
+    if (acceptForm) {
+        acceptForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitDecisionForm(this, 'accept');
+        });
+    }
+    
+    if (rejectForm) {
+        rejectForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitDecisionForm(this, 'reject');
+        });
+    }
+    
+    function submitDecisionForm(form, actionType) {
+        const formData = new FormData(form);
+        const action = form.getAttribute('action');
+        const btn = form.querySelector('button[type="submit"]');
+        const originalBtnText = btn.innerHTML;
+        
+        // Désactiver le bouton pendant le traitement
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Traitement...';
+        
+        fetch(action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Afficher un message de succès
+                showAlert(`Candidature ${actionType === 'accept' ? 'acceptée' : 'refusée'} avec succès`, 'success');
+                
+                // Fermer le modal
+                const modalId = actionType === 'accept' ? 'acceptModal' : 'rejectModal';
+                bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+                
+                // Recharger la page après 1.5s
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                showAlert(data.error || `Erreur lors de ${actionType === 'accept' ? 'l\'acceptation' : 'du refus'}`, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = originalBtnText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Une erreur réseau est survenue', 'danger');
+            btn.disabled = false;
+            btn.innerHTML = originalBtnText;
+        });
+    }
+    
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Ajouter l'alerte en haut de la page
+        const container = document.querySelector('.container.py-5');
+        container.prepend(alertDiv);
+        
+        // Supprimer automatiquement après 5s
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 5000);
+    }
+    
+    // Gestion des modals de documents pour les étudiants
+    {% if user.role == 'ETUDIANT' %}
+    const uploadCvModal = new bootstrap.Modal(document.getElementById('uploadCvModal'));
+    const uploadLettreModal = new bootstrap.Modal(document.getElementById('uploadLettreModal'));
+    
+    // Validation des fichiers
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) { // 5MB
+                    alert('Le fichier ne doit pas dépasser 5MB');
+                    this.value = '';
+                }
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    alert('Seuls les fichiers PDF sont acceptés');
+                    this.value = '';
+                }
+            }
+        });
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

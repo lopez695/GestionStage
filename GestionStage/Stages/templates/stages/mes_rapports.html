@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    {{ request.user.role|title }} | {% if request.user.role == 'etudiant' %}Mes Rapports{% else %}Gestion des Rapports{% endif %}
+{% endblock %}
+
+{% block css %}
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .report-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 5px 10px;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .avatar {
+        width: 36px;
+        height: 36px;
+        object-fit: cover;
+    }
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-0">
+                <i class="fas fa-file-alt text-primary me-2"></i>
+                {% if request.user.role == 'etudiant' %}Mes Rapports{% else %}Gestion des Rapports{% endif %}
+            </h2>
+            <p class="text-muted mb-0">Suivi et gestion des rapports de stage</p>
+        </div>
+        {% if request.user.role == 'etudiant' %}
+        <a href="{% url 'soumettre_rapport' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i>Nouveau rapport
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Filtres -->
+    <div class="card filter-section mb-4">
+        <div class="card-body py-3">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Statut</label>
+                    <select class="form-select" id="statutFilter">
+                        <option value="">Tous</option>
+                        {% for statut in statut_choices %}
+                        <option value="{{ statut.0 }}" {% if selected_statut == statut.0 %}selected{% endif %}>
+                            {{ statut.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                {% if request.user.role != 'etudiant' %}
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Promotion</label>
+                    <select class="form-select" id="promotionFilter">
+                        <option value="">Toutes</option>
+                        {% for promo in promotions %}
+                        <option value="{{ promo }}" {% if selected_promotion == promo %}selected{% endif %}>
+                            {{ promo }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Période</label>
+                    <select class="form-select" id="dateFilter">
+                        <option value="">Toutes</option>
+                        <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                        <option value="week" {% if date_filter == 'week' %}selected{% endif %}>Cette semaine</option>
+                        <option value="month" {% if date_filter == 'month' %}selected{% endif %}>Ce mois</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Recherche</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Nom, entreprise..." 
+                               id="searchInput" value="{{ search_query|default:'' }}">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des rapports -->
+    <div class="card">
+        <div class="card-body p-0">
+            {% if rapports %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr class="text-uppercase small text-muted">
+                            <th class="ps-4">Étudiant</th>
+                            <th>Entreprise</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center">Date</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rapport in rapports %}
+                        <tr class="report-card align-middle {% if rapport.statut == 'correction' %}border-left-warning{% endif %}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    {% if rapport.stage.candidature.etudiant.photo %}
+                                    <img src="{{ rapport.stage.candidature.etudiant.photo.url }}" 
+                                         class="avatar rounded-circle me-3">
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-semibold">{{ rapport.stage.candidature.etudiant.get_full_name }}</div>
+                                        <small class="text-muted">{{ rapport.stage.candidature.etudiant.promotion }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ rapport.stage.candidature.offre.entreprise.nom }}</div>
+                                <small class="text-muted">{{ rapport.stage.intitule|truncatechars:30 }}</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="status-badge rounded-pill 
+                                    {% if rapport.statut == 'valide' %}bg-success-light text-success
+                                    {% elif rapport.statut == 'soumis' %}bg-primary-light text-primary
+                                    {% elif rapport.statut == 'correction' %}bg-warning-light text-warning
+                                    {% else %}bg-secondary-light text-secondary{% endif %}">
+                                    <i class="fas 
+                                        {% if rapport.statut == 'valide' %}fa-check-circle
+                                        {% elif rapport.statut == 'correction' %}fa-exclamation-circle
+                                        {% else %}fa-clock{% endif %} me-1">
+                                    </i>
+                                    {{ rapport.get_statut_display }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="text-nowrap">{{ rapport.date_soumission|date:"d/m/Y" }}</div>
+                                <small class="text-muted">{{ rapport.date_soumission|date:"H:i" }}</small>
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{{ rapport.fichier.url }}" 
+                                       class="action-btn btn btn-sm btn-outline-primary rounded-circle"
+                                       download
+                                       data-bs-toggle="tooltip"
+                                       title="Télécharger">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    <a href="{% url 'detail_rapport' rapport.id %}" 
+                                       class="action-btn btn btn-sm btn-outline-secondary rounded-circle"
+                                       data-bs-toggle="tooltip"
+                                       title="Détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if request.user.role == 'enseignant' and rapport.statut != 'valide' %}
+                                    <a href="{% url 'evaluer_rapport' rapport.id %}" 
+                                       class="action-btn btn btn-sm btn-outline-success rounded-circle"
+                                       data-bs-toggle="tooltip"
+                                       title="Évaluer">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <div class="py-5 my-3">
+                    <i class="fas fa-file-alt fa-4x text-muted mb-4"></i>
+                    <h4 class="h5 text-muted mb-3">
+                        {% if request.user.role == 'etudiant' %}
+                        Aucun rapport soumis
+                        {% else %}
+                        Aucun rapport disponible
+                        {% endif %}
+                    </h4>
+                    <p class="text-muted mb-4">
+                        {% if request.user.role == 'etudiant' %}
+                        Commencez par soumettre votre premier rapport de stage.
+                        {% else %}
+                        Aucun étudiant n'a soumis de rapport pour le moment.
+                        {% endif %}
+                    </p>
+                    {% if request.user.role == 'etudiant' %}
+                    <a href="{% url 'soumettre_rapport' %}" class="btn btn-primary px-4">
+                        <i class="fas fa-plus me-2"></i>Soumettre un rapport
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if is_paginated %}
+        <div class="card-footer bg-white border-top py-3">
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Précédent">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Suivant">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation des tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (el) {
+        return new bootstrap.Tooltip(el);
+    });
+
+    // Gestion des filtres
+    const applyFilters = () => {
+        const params = new URLSearchParams();
+        const filters = {
+            statut: document.getElementById('statutFilter').value,
+            promotion: document.getElementById('promotionFilter')?.value,
+            date_filter: document.getElementById('dateFilter').value,
+            q: document.getElementById('searchInput').value,
+            sort: '{{ sort_field }}',
+            dir: '{{ sort_direction }}'
+        };
+
+        Object.entries(filters).forEach(([key, value]) => {
+            if (value) params.append(key, value);
+        });
+
+        window.location.href = window.location.pathname + '?' + params.toString();
+    };
+
+    // Écouteurs d'événements
+    document.querySelectorAll('#statutFilter, #promotionFilter, #dateFilter').forEach(el => {
+        el.addEventListener('change', applyFilters);
+    });
+    document.getElementById('searchButton').addEventListener('click', applyFilters);
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') applyFilters();
+    });
+});
+</script>
+{% endblock %}

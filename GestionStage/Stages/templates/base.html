@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plateforme de gestion des stages universitaires de l'Université Nangui Abrogoua">
+    
+    <title>{% block title %}Gestion des Stages Universitaires - Université Nangui Abrogoua{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'images/favicon.ico' %}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Styles supplémentaires pour les nouvelles fonctionnalités */
+        .sidebar {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+        }
+        .progress-bar-stage {
+            transition: width 0.6s ease;
+        }
+        .document-icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+        .nav-link.active {
+            font-weight: bold;
+            background-color: rgba(13, 110, 253, 0.1);
+            border-left: 3px solid #0d6efd;
+        }
+        .stage-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stage-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navigation -->
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+            <div class="container">
+                <!-- Logo -->
+                <a class="navbar-brand" href="{% url 'accueil' %}">
+                    <img src="{% static 'images/lopez.png' %}" width="100" alt="Logo Université Nangui Abrogoua" class="rounded-circle">
+                </a>
+                
+                <!-- Mobile Toggle -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                
+                <!-- Navigation Links -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'accueil' %}">Accueil</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'offres' %}">Offres de stage</a>
+                        </li>
+                        
+                        {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                {% if request.user.conversations1.exists %}
+                                    <a class="nav-link" href="{% url 'messagerie' request.user.conversations1.first.id %}">Messagerie</a>
+                                {% else %}
+                                    <a class="nav-link" href="{% url 'envoyer_message' user.id %}">Messagerie</a>
+
+                                {% endif %}
+                            </li>
+                            
+                            {% if user.role == 'ETUDIANT' %}
+                                <!-- Menu déroulant Étudiant -->
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="etudiantDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-tasks me-1"></i>Mes activités
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="etudiantDropdown">
+                                        <li><a class="dropdown-item" href="{% url 'liste_stages' %}">
+                                            <i class="bi bi-briefcase me-2"></i>Mes stages
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'mes_rapports' %}">
+                                            <i class="bi bi-file-earmark-text me-2"></i>Mes rapports
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'liste_visites' %}">
+                                            <i class="bi bi-calendar-event me-2"></i>Mes visites
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'mes_candidatures' %}">
+                                            <i class="fas fa-paper-plane me-2"></i>Mes candidatures
+                                        </a></li>
+                                    </ul>
+                                </li>
+                            
+                            {% elif user.role == 'ENTREPRISE' %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'dashboard_entreprise' %}">Tableau de bord</a>
+                                </li>
+                            
+                            {% elif user.role == 'ENSEIGNANT' %}
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="enseignantDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-chalkboard-teacher me-1"></i>Gestion des stages
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="enseignantDropdown">
+                                        <li><a class="dropdown-item" href="{% url 'dashboard_enseignant' %}">
+                                            <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'liste_stages' %}">
+                                            <i class="bi bi-briefcase me-2"></i>Tous les stages
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'liste_rapports' %}">
+                                            <i class="bi bi-file-earmark-text me-2"></i>Rapports à évaluer
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'liste_visites' %}">
+                                            <i class="bi bi-calendar-event me-2"></i>Visites planifiées
+                                        </a></li>
+                                    </ul>
+                                </li>
+                            {% endif %}
+                        {% endif %}
+                    </ul>
+                    
+                    <!-- User Section -->
+                    <ul class="navbar-nav">
+                        {% if user.is_authenticated %}
+                            <!-- User Dropdown -->
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    {% if user.photo %}
+                                        <img src="{{ user.photo.url }}" class="rounded-circle me-2" width="30" height="30" alt="Photo de profil">
+                                    {% else %}
+                                        <i class="fas fa-user-circle me-2"></i>
+                                    {% endif %}
+                                    <span>{{ user.get_full_name|default:user.username }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    {% if user.role == 'ETUDIANT' %}
+                                        <li><a class="dropdown-item" href="{% url 'my_profile' %}">
+                                            <i class="fas fa-user-cog me-2"></i>Mon compte
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'modifier_profil' %}">
+                                            <i class="fas fa-cog me-2"></i>Paramètres
+                                        </a></li>
+                                    {% elif user.role == 'ENTREPRISE' %}
+                                        <li><a class="dropdown-item" href="{% url 'profil_entreprise' user.entreprise_profile.id %}">
+                                            <i class="fas fa-building me-2"></i>Profil entreprise
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'modifier_profil_entreprise' %}">
+                                            <i class="fas fa-cog me-2"></i>Paramètres
+                                        </a></li>
+                                    {% elif user.role == 'ENSEIGNANT' %}
+                                        <li><a class="dropdown-item" href="{% url 'profil_enseignant' %}">
+                                            <i class="fas fa-chalkboard-teacher me-2"></i>Profil enseignant
+                                        </a></li>
+                                        <li><a class="dropdown-item" href="{% url 'modifier_profil_enseignant' %}">
+                                            <i class="fas fa-cog me-2"></i>Paramètres
+                                        </a></li>
+                                    {% endif %}
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'deconnexion' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                                    </a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <!-- Guest Links -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'connexion' %}">Connexion</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inscription' %}">Inscription</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+
+    <!-- Main Content -->
+    <main class="flex-grow-1">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Sidebar - Conditionally displayed for authenticated users -->
+                {% if user.is_authenticated %}
+                <div class="col-md-3 col-lg-2 d-md-block sidebar collapse bg-light">
+                    <div class="position-sticky pt-3">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if page_active == 'dashboard' %}active{% endif %}" 
+                                   href="{% if user.role == 'ETUDIANT' %}{% url 'dashboard_etudiant' %}{% elif user.role == 'ENSEIGNANT' %}{% url 'dashboard_enseignant' %}{% else %}{% url 'dashboard_entreprise' %}{% endif %}">
+                                    <i class="bi bi-speedometer2 me-2"></i>Tableau de bord
+                                </a>
+                            </li>
+                            
+                            {% if user.role == 'ETUDIANT'  %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if page_active == 'stages' %}active{% endif %}" href="{% url 'liste_stages' %}">
+                                    <i class="bi bi-briefcase me-2"></i>Mes Stages
+                                </a>
+                            </li>
+                            {% elif user.role == 'ETUDIANT' or user.role == 'ENSEIGNANT' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if page_active == 'rapports' %}active{% endif %}" href="{% url 'mes_rapports' %}">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Rapports
+                                </a>
+                            </li>
+                            {% if stage %}
+                           <li class="nav-item">
+                             <a class="nav-link {% if page_active == 'documents' %}active{% endif %}" 
+                             href="{% url 'liste_documents_stage' stage_id=stage.id %}">
+                               <i class="bi bi-folder me-2"></i>Documents
+                             </a>
+                            </li>
+                            {% endif %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if page_active == 'visites' %}active{% endif %}" href="{% url 'liste_visites' %}">
+                                    <i class="bi bi-calendar-event me-2"></i>Visites
+                                </a>
+                            </li>
+                            {% elif user.role == 'ENSEIGNANT' %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if page_active == 'calendrier' %}active{% endif %}" href="{% url 'calendrier' %}">
+                                    <i class="bi bi-calendar me-2"></i>Calendrier
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            <li class="nav-item dropdown">
+    {% if request.user.conversations1.exists %}
+        <a class="nav-link dropdown-toggle {% if page_active == 'messagerie' %}active{% endif %}" 
+           href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-envelope me-2"></i>Messagerie
+        </a>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'messagerie' request.user.conversations1.first.id %}">Dernière conversation</a></li>
+            {% for conversation in request.user.conversations1.all|slice:":5" %}
+                <li><a class="dropdown-item" href="{% url 'messagerie' conversation.id %}">
+                    Conversation avec {{ conversation.participant2.username }}
+                </a></li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{% url 'nouvelle_conversation' %}">Nouveau message</a></li>
+        </ul>
+    {% else %}
+        <a class="nav-link {% if page_active == 'messagerie' %}active{% endif %}" 
+           href="{% url 'envoyer_message' user.id %}">
+            <i class="bi bi-envelope me-2"></i>Messagerie
+        </a>
+    {% endif %}
+</li>
+                        </ul>
+                        
+                        <hr>
+                        
+                        <ul class="nav flex-column">
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'deconnexion' %}">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Main content area -->
+                <div class="{% if user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4 py-4">
+                    {% block profil %}{% endblock %}
+                    
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">{% block page_title %}{% endblock %}</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            {% block page_actions %}{% endblock %}
+                        </div>
+                    </div>
+                    
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-warning">À propos</h5>
+                    <p>Plateforme de gestion des stages universitaires de l'Université Nangui Abrogoua.</p>
+                </div>
+                
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-warning">Liens utiles</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{% url 'contact' %}" class="text-light"><i class="fas fa-chevron-right me-2"></i>Contact</a></li>
+                        <li class="mb-2"><a href="#" class="text-light"><i class="fas fa-chevron-right me-2"></i>FAQ</a></li>
+                        <li><a href="#" class="text-light"><i class="fas fa-chevron-right me-2"></i>Mentions légales</a></li>
+                    </ul>
+                </div>
+                
+                <div class="col-md-4">
+                    <h5 class="text-warning">Contact</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2 text-info"></i> Université Nangui Abrogoua, Abidjan</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2 text-info"></i> +225 XX XX XX XX</li>
+                        <li><i class="fas fa-envelope me-2 text-info"></i> stages@univ-na.edu.ci</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <hr class="bg-light my-4">
+            
+            <div class="text-center">
+                <p class="mb-0">&copy; {% now "Y" %} Université Nangui Abrogoua. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Animation pour les barres de progression
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBars = document.querySelectorAll('.progress-bar-stage');
+            progressBars.forEach(bar => {
+                const targetWidth = bar.style.width;
+                bar.style.width = '0';
+                setTimeout(() => {
+                    bar.style.width = targetWidth;
+                }, 100);
+            });
+            
+            // Activer les tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block content %}
+<div class="inscription-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card shadow-lg">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h2>Connexion</h2>
+                    </div>
+                    <div class="card-body p-5">
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Erreur :</strong> Veuillez vérifier vos identifiants.
+                        </div>
+                        {% endif %}
+
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+
+                            <div class="mb-3">
+                                <label for="id_username" class="form-label">Nom d'utilisateur</label>
+                                <input type="text" name="username" class="form-control" id="id_username" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_password" class="form-label">Mot de passe</label>
+                                <input type="password" name="password" class="form-control" id="id_password" required>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-sign-in-alt me-2"></i> Se connecter
+                                </button>
+                            </div>
+
+                            <div class="text-center">
+                                <p>Pas encore de compte ? <a href="{% url 'inscription' %}">Inscrivez-vous</a></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

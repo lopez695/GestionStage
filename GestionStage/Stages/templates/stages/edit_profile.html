@@ -1,0 +1,50 @@
+<!-- templates/stages/edit_profile.html -->
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3>Modifier mon profil</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <h4>Informations de base</h4>
+                        {{ user_form|crispy }}
+                        
+                        <hr>
+                        
+                        <h4>Photo de profil</h4>
+                        <div class="form-group text-center">
+                            <img src="{{ request.user.profile.avatar.url }}" class="rounded-circle mb-3" width="150" id="avatar-preview">
+                            {{ profile_form.avatar }}
+                        </div>
+                        
+                        <h4>Informations supplémentaires</h4>
+                        {{ profile_form|crispy }}
+                        
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            <a href="{% url 'profile_view' %}" class="btn btn-secondary">Annuler</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('id_avatar').addEventListener('change', function(event) {
+    const [file] = event.target.files
+    if (file) {
+        document.getElementById('avatar-preview').src = URL.createObjectURL(file)
+    }
+})
+</script>
+{% endblock %}

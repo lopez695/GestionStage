@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Boîte de réception</h2>
+
+    {% if messages %}
+        <ul class="list-group">
+            {% for message in messages %}
+                <li class="list-group-item {% if not message.lu %}list-group-item-info{% endif %}">
+                    <a href="{% url 'detail_message' message.id %}">
+                        <strong>{{ message.expediteur.username }}</strong> :
+                        {{ message.contenu|truncatewords:10 }}
+                        <span class="float-end text-muted">{{ message.date_envoi|date:"d M Y H:i" }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Vous n'avez reçu aucun message.</p>
+    {% endif %}
+</div>
+{% endblock %}

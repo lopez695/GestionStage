@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block content %}
+<div class="inscription-section py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9">
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h2 class="mb-0">Créer un compte</h2>
+                    </div>
+                    <div class="card-body p-4">
+
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Erreurs :</strong>
+                            <ul class="mb-0">
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li><strong>{{ field.label }} :</strong> {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="row">
+                                <!-- Photo -->
+                                <div class="col-md-4 text-center mb-4">
+                                    <img id="profile-pic-preview" 
+                                         src="{% static 'images/default-profile.png' %}" 
+                                         class="rounded-circle img-thumbnail mb-3" 
+                                         width="150" height="150" 
+                                         alt="Photo de profil">
+                                    <div class="form-group">
+                                        <label for="id_photo" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-camera me-1"></i> Choisir une photo
+                                        </label>
+                                        {{ form.photo }}
+                                    </div>
+                                </div>
+
+                                <!-- Infos utilisateur -->
+                                <div class="col-md-8">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_username">Nom d'utilisateur*</label>
+                                            {{ form.username }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_email">Email*</label>
+                                            {{ form.email }}
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_role">Vous êtes*</label>
+                                            {{ form.role }}
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_telephone">Téléphone*</label>
+                                            {{ form.telephone }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Champs spécifiques étudiants -->
+                            <div id="student-fields" style="display: none;">
+                                <hr>
+                                <h5 class="mb-3">Informations étudiant</h5>
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="id_numero_etudiant">Numéro étudiant*</label>
+                                        {{ form.numero_etudiant }}
+                                        <div class="invalid-feedback d-none" id="numero-error"></div>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="id_promotion">Promotion*</label>
+                                        {{ form.promotion }}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="id_specialite">Spécialité*</label>
+                                        {{ form.specialite }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_password1">Mot de passe*</label>
+                                    {{ form.password1 }}
+                                    <small class="form-text text-muted">
+                                        Doit contenir au moins 8 caractères, ne pas être trop simple, ni trop commun.
+                                    </small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="id_password2">Confirmation du mot de passe*</label>
+                                    {{ form.password2 }}
+                                </div>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="accept_terms" required>
+                                <label class="form-check-label" for="accept_terms">
+                                    J'accepte les <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">conditions d'utilisation</a>*
+                                </label>
+                            </div>
+
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-user-plus me-2"></i> S'inscrire
+                                </button>
+                            </div>
+
+                            <div class="text-center">
+                                <p>Déjà un compte ? <a href="{% url 'connexion' %}">Connectez-vous</a></p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal des conditions -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Conditions d'utilisation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenu des conditions -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">J'ai compris</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JS -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const photoInput = document.getElementById('id_photo');
+    if (photoInput) {
+        photoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('profile-pic-preview').src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const roleSelect = document.getElementById('id_role');
+    const studentFields = document.getElementById('student-fields');
+    const numeroField = document.getElementById('id_numero_etudiant');
+    const numeroError = document.getElementById('numero-error');
+
+    function toggleStudentFields() {
+        if (roleSelect.value === 'ETUDIANT') {
+            studentFields.style.display = 'block';
+            document.querySelectorAll('#student-fields input').forEach(input => {
+                input.required = true;
+            });
+        } else {
+            studentFields.style.display = 'none';
+            document.querySelectorAll('#student-fields input').forEach(input => {
+                input.required = false;
+            });
+        }
+    }
+
+    if (numeroField) {
+        numeroField.addEventListener('blur', function() {
+            const numero = this.value;
+            if (numero.length > 0) {
+                fetch(`/api/check-numero-etudiant/?numero=${numero}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            numeroError.textContent = "Ce numéro étudiant est déjà utilisé";
+                            numeroError.classList.remove('d-none');
+                            numeroError.classList.add('d-block');
+                            this.classList.add('is-invalid');
+                        } else {
+                            numeroError.classList.add('d-none');
+                            numeroError.classList.remove('d-block');
+                            this.classList.remove('is-invalid');
+                        }
+                    });
+            }
+        });
+    }
+
+    toggleStudentFields();
+    roleSelect.addEventListener('change', toggleStudentFields);
+});
+</script>
+{% endblock %}

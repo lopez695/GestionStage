@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestion des Stages{% endblock %}
+
+{% block css %}
+<style>
+    .stage-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .stage-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .stage-card.en-attente {
+        border-left-color: #ffc107;
+    }
+    .stage-card.valide {
+        border-left-color: #28a745;
+    }
+    .stage-card.refuse {
+        border-left-color: #dc3545;
+    }
+    .progress {
+        height: 8px;
+    }
+    .badge-entreprise {
+        background-color: #6f42c1;
+    }
+    .badge-etudiant {
+        background-color: #20c997;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-briefcase me-2"></i>Gestion des Stages
+                </h1>
+                
+                {% if request.user.role == 'enseignant' %}
+                <a href="{% url 'creer_stage' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> Nouveau Stage
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et Statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="btn-group" role="group">
+                <a href="?statut=all" class="btn btn-outline-secondary{% if not request.GET.statut or request.GET.statut == 'all' %} active{% endif %}">
+                    Tous ({{ counts.total }})
+                </a>
+                <a href="?statut=valide" class="btn btn-outline-success{% if request.GET.statut == 'valide' %} active{% endif %}">
+                    <i class="fas fa-check-circle me-1"></i> Validés ({{ counts.valide }})
+                </a>
+                <a href="?statut=en_attente" class="btn btn-outline-warning{% if request.GET.statut == 'en_attente' %} active{% endif %}">
+                    <i class="fas fa-clock me-1"></i> En attente ({{ counts.en_attente }})
+                </a>
+                <a href="?statut=termine" class="btn btn-outline-info{% if request.GET.statut == 'termine' %} active{% endif %}">
+                    <i class="fas fa-flag-checkered me-1"></i> Terminés ({{ counts.termine }})
+                </a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <form method="get" class="input-group">
+                <input type="text" name="q" class="form-control" placeholder="Rechercher..." value="{{ request.GET.q }}">
+                <button class="btn btn-outline-primary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Message spécifique pour les entreprises -->
+    {% if request.user.role == 'entreprise' %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        Vous visualisez les stages issus des candidatures que vous avez acceptées.
+        <a href="{% url 'liste_candidatures' %}" class="alert-link">Voir mes candidatures</a>
+    </div>
+    {% endif %}
+
+    <!-- Liste des Stages -->
+    <div class="row">
+        {% for stage in stages %}
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card stage-card h-100 {% if stage.valide %}valide{% elif stage.statut == 'en_attente' %}en-attente{% elif stage.statut == 'refuse' %}refuse{% endif %}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">{{ stage.candidature.offre.titre }}</h5>
+                        <p class="mb-0 small text-muted">
+                            {{ stage.candidature.offre.entreprise.nom }}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="badge bg-{% if stage.valide %}success{% else %}warning{% endif %}">
+                            {% if stage.valide %}Validé{% else %}{{ stage.get_statut_display }}{% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Barre de progression -->
+                    <div class="progress mb-3">
+                        <div class="progress-bar bg-{% if stage.est_termine %}success{% else %}primary{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ stage.pourcentage_complete }}%" 
+                             aria-valuenow="{{ stage.pourcentage_complete }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+
+                    <!-- Métriques -->
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ stage.pourcentage_complete }}%</div>
+                            <small class="text-muted">Avancement</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ stage.jours_restants }}</div>
+                            <small class="text-muted">Jours restants</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="h5 mb-0">{{ stage.duree_semaines }}</div>
+                            <small class="text-muted">Semaines</small>
+                        </div>
+                    </div>
+
+                    <!-- Détails -->
+                    <ul class="list-unstyled mb-3">
+                        <li class="mb-1">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            {{ stage.date_debut|date:"d/m/Y" }} - {{ stage.date_fin|date:"d/m/Y" }}
+                        </li>
+                        <li class="mb-1">
+                            <i class="fas fa-user-tie me-2 text-primary"></i>
+                            {{ stage.tuteur_entreprise }}
+                        </li>
+                        {% if request.user.role != 'etudiant' %}
+                        <li class="mb-1">
+                            <i class="fas fa-user-graduate me-2 text-primary"></i>
+                            {{ stage.candidature.etudiant.user.get_full_name }}
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <!-- Actions -->
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'detail_stage' stage.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i> Détails
+                        </a>
+                        
+                        {% if request.user.role == 'entreprise' %}
+                        <a href="{% url 'generer_convention' stage.id %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-file-contract me-1"></i> Convention
+                        </a>
+                        {% endif %}
+                        
+                        {% if request.user.role == 'etudiant' and not stage.valide %}
+                        <a href="{% url 'modifier_stage' stage.id %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-edit me-1"></i> Modifier
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ stage.updated_at|timesince }}
+                        </small>
+                        {% if stage.candidature.etudiant == request.user.etudiant_profile %}
+                        <span class="badge bg-info">Mon stage</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-briefcase fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucun stage trouvé</h5>
+                    {% if request.GET.q or request.GET.statut %}
+                    <p class="text-muted">Essayez de modifier vos critères de recherche</p>
+                    <a href="{% url 'liste_stages' %}" class="btn btn-outline-primary mt-2">
+                        <i class="fas fa-undo me-1"></i> Réinitialiser les filtres
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">
+                    &laquo; Précédent
+                </a>
+            </li>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">
+                    Suivant &raquo;
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation des cartes
+    const cards = document.querySelectorAll('.stage-card');
+    cards.forEach((card, index) => {
+        setTimeout(() => {
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

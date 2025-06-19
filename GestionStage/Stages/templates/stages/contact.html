@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Contactez-nous{% endblock %}
+
+{% block content %}
+<div class="contact-section">
+    <div class="container">
+        <!-- En-tête -->
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h1 class="display-4">Contactez-nous</h1>
+                <p class="lead">Une question ? Un problème ? Nous sommes là pour vous aider.</p>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Formulaire de contact -->
+            <div class="col-lg-7 mb-5 mb-lg-0">
+                <div class="card shadow-sm">
+                    <div class="card-body p-5">
+                        <h3 class="mb-4">Envoyez-nous un message</h3>
+                        
+                        {% if messages %}
+                        <div class="alert-messages">
+                            {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="nom" class="form-label">Nom complet</label>
+                                    <input type="text" class="form-control" id="nom" name="nom" 
+                                           value="{% if form.nom.value %}{{ form.nom.value }}{% endif %}" required>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer votre nom.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Adresse email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{% if form.email.value %}{{ form.email.value }}{% endif %}" required>
+                                    <div class="invalid-feedback">
+                                        Veuillez entrer une adresse email valide.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="sujet" class="form-label">Sujet</label>
+                                <select class="form-select" id="sujet" name="sujet" required>
+                                    <option value="" disabled selected>Choisissez un sujet</option>
+                                    <option value="question">Question générale</option>
+                                    <option value="probleme">Problème technique</option>
+                                    <option value="stage">Demande concernant un stage</option>
+                                    <option value="autre">Autre demande</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Veuillez sélectionner un sujet.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Votre message</label>
+                                <textarea class="form-control" id="message" name="message" rows="5" required>{% if form.message.value %}{{ form.message.value }}{% endif %}</textarea>
+                                <div class="invalid-feedback">
+                                    Veuillez entrer votre message.
+                                </div>
+                            </div>
+
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="consentement" name="consentement" required>
+                                <label class="form-check-label" for="consentement">
+                                    J'accepte que mes informations soient utilisées pour traiter ma demande.
+                                </label>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i> Envoyer le message
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de contact -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-5">
+                        <h3 class="mb-4">Nos coordonnées</h3>
+                        
+                        <div class="contact-info mb-5">
+                            <div class="d-flex mb-4">
+                                <div class="me-4 text-primary">
+                                    <i class="fas fa-map-marker-alt fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Adresse</h5>
+                                    <p class="mb-0">Université XYZ<br>123 Avenue des Stages<br>75000 Paris, France</p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex mb-4">
+                                <div class="me-4 text-primary">
+                                    <i class="fas fa-phone-alt fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Téléphone</h5>
+                                    <p class="mb-0">
+                                        <a href="tel:+33123456789">+33 1 23 45 67 89</a><br>
+                                        Lundi-Vendredi, 9h-17h
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex mb-4">
+                                <div class="me-4 text-primary">
+                                    <i class="fas fa-envelope fa-2x"></i>
+                                </div>
+                                <div>
+                                    <h5>Email</h5>
+                                    <p class="mb-0">
+                                        <a href="mailto:contact@stages-universite.fr">contact@stages-universite.fr</a><br>
+                                        Réponse sous 48h
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <h4 class="mb-3">Support rapide</h4>
+                        <div class="support-links">
+                            <a href="#" class="btn btn-outline-primary mb-2">
+                                <i class="fas fa-question-circle me-2"></i> FAQ
+                            </a>
+                            <a href="#" class="btn btn-outline-primary mb-2">
+                                <i class="fas fa-file-alt me-2"></i> Documentation
+                            </a>
+                            <a href="#" class="btn btn-outline-primary mb-2">
+                                <i class="fas fa-video me-2"></i> Tutoriels vidéo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Carte Google Maps -->
+<div class="map-section">
+    <div class="container-fluid px-0">
+        <div class="map-responsive">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.99144060821!2d2.292292615509614!3d48.85837360866186!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66e2964e34e2d%3A0x8ddca9ee380ef7e0!2sTour%20Eiffel!5e0!3m2!1sfr!2sfr!4v1620000000000!5m2!1sfr!2sfr" 
+                    width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        </div>
+    </div>
+</div>
+
+<style>
+.contact-section {
+    padding: 80px 0;
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+}
+
+.shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+.contact-info i {
+    width: 36px;
+    text-align: center;
+}
+
+.map-section {
+    margin-top: 50px;
+}
+
+.map-responsive {
+    overflow: hidden;
+    padding-bottom: 56.25%;
+    position: relative;
+    height: 0;
+}
+
+.map-responsive iframe {
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+}
+
+.support-links .btn {
+    width: 100%;
+    text-align: left;
+}
+
+@media (max-width: 768px) {
+    .contact-section {
+        padding: 40px 0;
+    }
+    
+    .card-body {
+        padding: 20px !important;
+    }
+}
+</style>
+
+<script>
+// Validation du formulaire côté client
+(function () {
+    'use strict'
+    
+    var forms = document.querySelectorAll('.needs-validation')
+    
+    Array.prototype.slice.call(forms)
+        .forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+})()
+</script>
+{% endblock %}

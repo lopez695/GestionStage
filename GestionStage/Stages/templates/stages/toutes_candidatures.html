@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Candidatures pour {{ offre.titre }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+       <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">Candidatures pour "{{ offre.titre }}"</h4>
+    {% if offre.id %}
+        <a href="{% url 'detail_offre' offre_id=offre.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Retour
+        </a>
+    {% else %}
+        <span class="text-muted">Offre non valide</span>
+    {% endif %}
+</div>
+
+        
+        <div class="card-body">
+            {% if candidatures %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Étudiant</th>
+                            <th>Date</th>
+                            <th class="text-center">Statut</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidature in candidatures %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if candidature.etudiant.user.photo %}
+                                    <img src="{{ candidature.etudiant.user.photo.url }}" 
+                                         class="rounded-circle me-3" width="40" height="40" 
+                                         style="object-fit: cover;">
+                                    {% else %}
+                                    <div class="rounded-circle bg-secondary me-3 d-flex align-items-center justify-content-center" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ candidature.etudiant.user.get_full_name }}</h6>
+                                        <small class="text-muted">{{ candidature.etudiant.user.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {{ candidature.date_postulation|date:"d/m/Y" }}<br>
+                                <small class="text-muted">{{ candidature.date_postulation|timesince }}</small>
+                            </td>
+                            <td class="text-center">
+                                <!-- Debug: Afficher la valeur brute du statut -->
+                                <small class="d-block text-muted">({{ candidature.statut }})</small>
+                                
+                                {% if candidature.statut == 'ACCEPTEE' %}
+                                <span class="badge rounded-pill bg-success">
+                                    <i class="fas fa-check me-1"></i> Acceptée
+                                </span>
+                                {% elif candidature.statut == 'REFUSEE' %}
+                                <span class="badge rounded-pill bg-danger">
+                                    <i class="fas fa-times me-1"></i> Refusée
+                                </span>
+                                {% else %}
+                                <span class="badge rounded-pill bg-warning text-dark">
+                                    <i class="fas fa-clock me-1"></i> En attente
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'detail_candidature' candidature.id %}" 
+                                   class="btn btn-sm btn-outline-primary me-1"
+                                   title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                {% if candidature.statut == 'EN_ATTENTE' %}
+                                <form method="post" action="{% url 'accepter_candidature' candidature.id %}" 
+                                      class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-success me-1"
+                                            title="Accepter">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'refuser_candidature' candidature.id %}" 
+                                      class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-danger"
+                                            title="Refuser">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                <h5>Aucune candidature pour cette offre</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

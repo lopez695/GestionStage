@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header Card -->
+            <div class="card bg-light border-0 mb-4">
+                <div class="card-body text-center">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-envelope-open-text text-primary me-2"></i>
+                        Contacter {{ entreprise.nom }}
+                    </h1>
+                    {% if not contact_email_available %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Cette entreprise n'a pas d'email de contact enregistré.
+                        {% if entreprise.telephone %}Vous pouvez les contacter par téléphone.{% endif %}
+                    </div>
+                    {% else %}
+                    <p class="lead text-muted">
+                        Remplissez ce formulaire pour envoyer un message directement à l'entreprise
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if contact_email_available %}
+            <!-- Contact Form -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                            <p class="mb-0"><i class="fas fa-exclamation-circle me-2"></i>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ form.nom }}
+                                    <label for="id_nom">Votre nom</label>
+                                    {% if form.nom.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.nom.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    {{ form.prenom }}
+                                    <label for="id_prenom">Votre prénom</label>
+                                    {% if form.prenom.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.prenom.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    {{ form.email }}
+                                    <label for="id_email">Votre email</label>
+                                    {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    {{ form.sujet }}
+                                    <label for="id_sujet">Sujet du message</label>
+                                    {% if form.sujet.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.sujet.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="id_message" class="form-label fw-bold">Votre message</label>
+                                    {{ form.message }}
+                                    {% if form.message.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.message.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text">Décrivez précisément votre demande</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg py-3">
+                                        <i class="fas fa-paper-plane me-2"></i> Envoyer le message
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Contact Info -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <h4 class="mb-4 fw-bold">
+                        <i class="fas fa-address-card text-primary me-2"></i>
+                        Autres moyens de contact
+                    </h4>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 gap-lg-4">
+                        {% if entreprise.telephone %}
+                        <div class="contact-method">
+                            <a href="tel:{{ entreprise.telephone }}" class="text-decoration-none text-dark">
+                                <div class="p-3 bg-light rounded-circle shadow-sm hover-effect">
+                                    <i class="fas fa-phone-alt fa-2x text-primary"></i>
+                                </div>
+                                <p class="mt-2 mb-0 fw-medium">Appeler</p>
+                                <small class="text-muted">{{ entreprise.telephone }}</small>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if entreprise.email %}
+                        <div class="contact-method">
+                            <a href="mailto:{{ entreprise.email }}" class="text-decoration-none text-dark">
+                                <div class="p-3 bg-light rounded-circle shadow-sm hover-effect">
+                                    <i class="fas fa-envelope fa-2x text-primary"></i>
+                                </div>
+                                <p class="mt-2 mb-0 fw-medium">Email</p>
+                                <small class="text-muted text-truncate d-block" style="max-width: 150px;">{{ entreprise.email }}</small>
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if entreprise.site_web %}
+                        <div class="contact-method">
+                            <a href="{{ entreprise.site_web }}" target="_blank" class="text-decoration-none text-dark">
+                                <div class="p-3 bg-light rounded-circle shadow-sm hover-effect">
+                                    <i class="fas fa-globe fa-2x text-primary"></i>
+                                </div>
+                                <p class="mt-2 mb-0 fw-medium">Site web</p>
+                                <small class="text-muted text-truncate d-block" style="max-width: 150px;">{{ entreprise.site_web }}</small>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hover-effect {
+        transition: all 0.3s ease;
+    }
+    .hover-effect:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-floating label {
+        padding: 1rem 1.25rem;
+        color: #6c757d;
+    }
+    
+    .form-control, .form-select {
+        padding: 1rem 1.25rem;
+        border-radius: 0.5rem;
+        border: 1px solid #ced4da;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .invalid-feedback {
+        font-size: 0.875em;
+        margin-top: 0.25rem;
+    }
+    
+    .contact-method {
+        min-width: 120px;
+    }
+    
+    .alert-warning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Documents du Stage - {{ stage.candidature.offre.entreprise.nom }}{% endblock %}
+{% block page_title %}Documents du Stage{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{% url 'mes_rapports' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Retour aux rapports
+    </a>
+    {% if request.user == stage.candidature.etudiant %}
+    <a href="{% url 'upload_document_stage' stage.id %}" class="btn btn-sm btn-success">
+        <i class="bi bi-plus"></i> Ajouter un document
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Carte d'information du stage -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Informations du stage</h5>
+            </div>
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-muted">{{ stage.candidature.offre.entreprise.nom }}</h6>
+                
+                <div class="progress mb-3">
+                    <div class="progress-bar progress-bar-stage bg-success" 
+                         role="progressbar" 
+                         style="width: {{ stage.pourcentage_complete }}%" 
+                         aria-valuenow="{{ stage.pourcentage_complete }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        {{ stage.pourcentage_complete }}%
+                    </div>
+                </div>
+                
+                <p class="card-text">
+                    <i class="bi bi-calendar me-2"></i>
+                    Du {{ stage.date_debut|date:"d/m/Y" }} au {{ stage.date_fin|date:"d/m/Y" }}
+                </p>
+                
+                <p class="card-text">
+                    <i class="bi bi-clock me-2"></i>
+                    {{ stage.jours_restants }} jours restants | {{ stage.duree_semaines }} semaines
+                </p>
+                
+                <p class="card-text">
+                    <i class="bi bi-person me-2"></i>
+                    Tuteur: {{ stage.tuteur_entreprise }}
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-{% if stage.valide %}success{% else %}warning{% endif %}">
+                        {% if stage.valide %}Validé{% else %}En cours{% endif %}
+                    </span>
+                    
+                    <a href="{% url 'detail_stage' stage.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Voir le stage
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistiques des documents -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Statistiques des documents</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-file-contract text-primary me-2"></i> Conventions</span>
+                        <span class="badge bg-primary rounded-pill">
+                            {{ stage.documents.filter(type_document='convention').count }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-file-earmark-text text-success me-2"></i> Rapports</span>
+                        <span class="badge bg-success rounded-pill">
+                            {{ stage.documents.filter(type_document='rapport').count }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-journal-text text-info me-2"></i> Journaux</span>
+                        <span class="badge bg-info rounded-pill">
+                            {{ stage.documents.filter(type_document='journal').count }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-file-earmark text-secondary me-2"></i> Autres</span>
+                        <span class="badge bg-secondary rounded-pill">
+                            {{ stage.documents.filter(type_document='autre').count }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Liste des documents -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Liste des documents</h5>
+                <span class="badge bg-primary">{{ stage.documents.count }} document(s)</span>
+            </div>
+            
+            {% if stage.documents.all %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Nom du document</th>
+                            <th>Date d'ajout</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>
+                                <span class="badge bg-{{ doc.type_color }}">
+                                    <i class="bi bi-{{ doc.type_icon }} me-1"></i>
+                                    {{ doc.get_type_document_display }}
+                                </span>
+                            </td>
+                            <td>{{ doc.nom }}</td>
+                            <td>{{ doc.date_upload|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ doc.fichier.url }}" class="btn btn-outline-primary" download title="Télécharger">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    {% if request.user == stage.candidature.etudiant %}
+                                    <a href="{% url 'supprimer_document_stage' doc.id %}" class="btn btn-outline-danger" title="Supprimer">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle"></i> Aucun document disponible pour ce stage.
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Animation de la barre de progression
+    document.addEventListener('DOMContentLoaded', function() {
+        const progressBar = document.querySelector('.progress-bar-stage');
+        if (progressBar) {
+            const targetWidth = progressBar.style.width;
+            progressBar.style.width = '0';
+            setTimeout(() => {
+                progressBar.style.width = targetWidth;
+            }, 100);
+        }
+        
+        // Initialisation des tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}
